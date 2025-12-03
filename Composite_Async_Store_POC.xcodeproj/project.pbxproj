@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		50B5C6BC2EE03C9C004F316F /* ReduxCoreIFC in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6BB2EE03C9C004F316F /* ReduxCoreIFC */; };
+		50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		503EFDC22EDF272900D650F0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				50B5C6BC2EE03C9C004F316F /* ReduxCoreIFC in Frameworks */,
+				50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,7 @@
 				503EFDB62EDF272800D650F0 /* Composite_Async_Store_POC */,
 				503EFDC42EDF272900D650F0 /* Composite_Async_Store_POCTests */,
 				503EFDCE2EDF272900D650F0 /* Composite_Async_Store_POCUITests */,
+				50B5C6BA2EE03C9C004F316F /* Frameworks */,
 				503EFDB52EDF272800D650F0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +98,13 @@
 				503EFDCB2EDF272900D650F0 /* Composite_Async_Store_POCUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		50B5C6BA2EE03C9C004F316F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +127,8 @@
 			);
 			name = Composite_Async_Store_POC;
 			packageProductDependencies = (
+				50B5C6BB2EE03C9C004F316F /* ReduxCoreIFC */,
+				50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */,
 			);
 			productName = Composite_Async_Store_POC;
 			productReference = 503EFDB42EDF272800D650F0 /* Composite_Async_Store_POC.app */;
@@ -195,6 +212,9 @@
 			);
 			mainGroup = 503EFDAB2EDF272800D650F0;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 503EFDB52EDF272800D650F0 /* Products */;
 			projectDirPath = "";
@@ -615,6 +635,26 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LocalSPMS/ReduxCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		50B5C6BB2EE03C9C004F316F /* ReduxCoreIFC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */;
+			productName = ReduxCoreIFC;
+		};
+		50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */;
+			productName = ReduxCoreIMP;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 503EFDAC2EDF272800D650F0 /* Project object */;
 }
