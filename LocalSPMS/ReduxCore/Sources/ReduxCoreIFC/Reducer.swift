@@ -9,7 +9,7 @@ public typealias Reducer<S: StoreState, A: Action> = @Sendable (inout S, A) -> V
 //extension Reducer: Sendable {}
 
 /// Lift a reducer from a sub-state to a parent state using a WritableKeyPath
-func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
+public func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
     reducer: @escaping Reducer<SubState, A>,
     state keyPath: WritableKeyPath<ParentState, SubState> & Sendable
 ) -> Reducer<ParentState, A> {
@@ -19,7 +19,7 @@ func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
 }
 
 /// Lift a reducer that handles a subset of parent actions
-func lift<ParentState: StoreState, SubState: StoreState, ParentAction: Action, SubAction: Action>(
+public func lift<ParentState: StoreState, SubState: StoreState, ParentAction: Action, SubAction: Action>(
     reducer: @escaping Reducer<SubState, SubAction>,
     state stateKeyPath: WritableKeyPath<ParentState, SubState> & Sendable,
     action actionPrism: @escaping @Sendable (ParentAction) -> SubAction?

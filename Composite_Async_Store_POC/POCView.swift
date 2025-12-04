@@ -11,6 +11,8 @@ import Observation
 import ReduxCoreIFC
 import ReduxCoreIMP
 
+import CounterRedux
+import CounterView
 
 // MARK: - Example Implementation with Composable States
 
@@ -134,6 +136,29 @@ func loggingMiddleware<S: StoreState, A: Action>() -> Middleware<S, A> {
     }
 }
 
+// MARK: - Adapter Classes
+
+// Adapter to transform parent interactor to child interactor
+@MainActor
+final class AdaptedInteractor<ParentAction: Action, ChildAction: Action>: Interacting {
+    private let parentInteractor: any Interacting<ParentAction>
+    private let transform: (ChildAction) -> ParentAction
+    
+    init(
+        parentInteractor: any Interacting<ParentAction>,
+        transform: @escaping (ChildAction) -> ParentAction
+    ) {
+        self.parentInteractor = parentInteractor
+        self.transform = transform
+    }
+    
+    func send(_ action: ChildAction) async {
+        await parentInteractor.send(transform(action))
+    }
+}
+
+
+
 // MARK: - View Container
 
 @MainActor
@@ -183,6 +208,40 @@ class ViewContainer<S: StoreState, A: Action> {
             stateStream: stateStream,
             keyPath: keyPath,
             transform: transform
+        )
+    }
+    
+    // Helper to create adapted interactor for child actions
+    func adaptedInteractor<ChildAction: Action>(
+        transform: @escaping (ChildAction) -> A
+    ) -> AdaptedInteractor<A, ChildAction> {
+        return AdaptedInteractor(
+            parentInteractor: interactor,
+            transform: transform
+        )
+    }
+    
+    // Helper to create child state presenter from parent state
+    func childPresenter<ChildState: StoreState, Value: Equatable>(
+        extractChildState: @escaping (S) -> ChildState,
+        childKeyPath: KeyPath<ChildState, Value>
+    ) async -> Presenter<ChildState, Value> {
+        let currentState = await store.state
+        let stateStream = await store.subscribe()
+        
+        // Create a transformed stream that extracts child state
+        let childStateStream = AsyncStream<ChildState> { continuation in
+            Task {
+                for await parentState in stateStream {
+                    continuation.yield(extractChildState(parentState))
+                }
+            }
+        }
+        
+        return Presenter(
+            initialValue: extractChildState(currentState)[keyPath: childKeyPath],
+            stateStream: childStateStream,
+            keyPath: childKeyPath
         )
     }
     
@@ -238,7 +297,7 @@ struct UserProfileView: View {
 struct ContentView: View {
     let container: ViewContainer<AppState, AppAction>
     
-    @State private var counterPresenter: Presenter<AppState, Int>?
+    @State private var counterPresenter: Presenter<CounterState, Int>?
     @State private var namePresenter: Presenter<AppState, String>?
     @State private var isLoggedInPresenter: Presenter<AppState, Bool>?
     
@@ -249,7 +308,9 @@ struct ContentView: View {
                let isLoggedInPresenter {
                 TabView {
                     CounterView(
-                        interactor: container.interactor,
+                        interactor: container.adaptedInteractor { counterAction in
+                            AppAction.counter(counterAction)
+                        },
                         counterPresenter: counterPresenter
                     )
                     .tabItem {
@@ -270,10 +331,46 @@ struct ContentView: View {
             }
         }
         .task {
-            // Create presenters for sub-state slices using KeyPath composition
-            counterPresenter = await container.presenter(for: \.counter.count)
+            // Create child state presenter for counter
+            counterPresenter = await container.childPresenter(
+                extractChildState: \.counter,
+                childKeyPath: \.count
+            )
+            
+            // Create presenters for user state (these stay as parent state presenters)
             namePresenter = await container.presenter(for: \.user.name)
             isLoggedInPresenter = await container.presenter(for: \.user.isLoggedIn)
         }
     }
+}
+
+// MARK: - Main POC View
+
+struct POCView: View {
+    @State private var container: ViewContainer<AppState, AppAction>?
+    
+    var body: some View {
+        Group {
+            if let container {
+                ContentView(container: container)
+            } else {
+                ProgressView("Initializing...")
+            }
+        }
+        .task {
+            // Create the store with middleware
+            let store = Store(
+                initialState: AppState(),
+                reducer: appReducer,
+                middlewares: [loggingMiddleware()]
+            )
+            
+            // Create the container
+            container = ViewContainer(store: store)
+        }
+    }
+}
+
+#Preview {
+    POCView()
 }

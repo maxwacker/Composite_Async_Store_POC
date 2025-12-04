@@ -11,11 +11,16 @@ import ReduxCoreIMP
 
 import CounterRedux
 
-struct CounterView: View {
+public struct CounterView: View {
     let interactor: any Interacting<CounterAction>
     let counterPresenter: Presenter<CounterState, Int>
     
-    var body: some View {
+    public init(interactor: any Interacting<CounterAction>, counterPresenter: Presenter<CounterState, Int>) {
+        self.interactor = interactor
+        self.counterPresenter = counterPresenter
+    }
+    
+    public var body: some View {
         VStack(spacing: 20) {
             Text("Counter: \(counterPresenter.value)")
                 .font(.largeTitle)
