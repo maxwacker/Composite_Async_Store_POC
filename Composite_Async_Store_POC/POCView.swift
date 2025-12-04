@@ -15,26 +15,8 @@ import ReduxCoreIMP
 // MARK: - Example Implementation with Composable States
 
 // Sub-State: Counter
-struct CounterState: StoreState {
-    var count: Int = 0
-}
 
-enum CounterAction: Action {
-    case increment
-    case decrement
-    case reset
-}
 
-let counterReducer: Reducer<CounterState, CounterAction> = { state, action in
-    switch action {
-    case .increment:
-        state.count += 1
-    case .decrement:
-        state.count -= 1
-    case .reset:
-        state.count = 0
-    }
-}
 
 // Sub-State: User Profile
 struct UserState: StoreState {
@@ -211,41 +193,7 @@ class ViewContainer<S: StoreState, A: Action> {
 
 // MARK: - Example SwiftUI Views (Independent of Redux)
 
-struct CounterView: View {
-    let interactor: any Interacting<AppAction>
-    let counterPresenter: Presenter<AppState, Int>
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Counter: \(counterPresenter.value)")
-                .font(.largeTitle)
-            
-            HStack(spacing: 16) {
-                Button("−") {
-                    Task {
-                        await interactor.send(.counter(.decrement))
-                    }
-                }
-                .buttonStyle(.bordered)
-                
-                Button("+") {
-                    Task {
-                        await interactor.send(.counter(.increment))
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                
-                Button("Reset") {
-                    Task {
-                        await interactor.send(.counter(.reset))
-                    }
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .padding()
-    }
-}
+
 
 struct UserProfileView: View {
     let interactor: any Interacting<AppAction>

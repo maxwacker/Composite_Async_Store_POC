@@ -5,13 +5,13 @@
 //  Created by maxime wacker on 03/12/2025.
 //
 
-public typealias Reducer<S: StoreState, A: Action> = (inout S, A) -> Void
-
+public typealias Reducer<S: StoreState, A: Action> = @Sendable (inout S, A) -> Void
+//extension Reducer: Sendable {}
 
 /// Lift a reducer from a sub-state to a parent state using a WritableKeyPath
-public func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
+func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
     reducer: @escaping Reducer<SubState, A>,
-    state keyPath: WritableKeyPath<ParentState, SubState>
+    state keyPath: WritableKeyPath<ParentState, SubState> & Sendable
 ) -> Reducer<ParentState, A> {
     return { parentState, action in
         reducer(&parentState[keyPath: keyPath], action)
@@ -19,10 +19,10 @@ public func lift<ParentState: StoreState, SubState: StoreState, A: Action>(
 }
 
 /// Lift a reducer that handles a subset of parent actions
-public func lift<ParentState: StoreState, SubState: StoreState, ParentAction: Action, SubAction: Action>(
+func lift<ParentState: StoreState, SubState: StoreState, ParentAction: Action, SubAction: Action>(
     reducer: @escaping Reducer<SubState, SubAction>,
-    state stateKeyPath: WritableKeyPath<ParentState, SubState>,
-    action actionPrism: @escaping (ParentAction) -> SubAction?
+    state stateKeyPath: WritableKeyPath<ParentState, SubState> & Sendable,
+    action actionPrism: @escaping @Sendable (ParentAction) -> SubAction?
 ) -> Reducer<ParentState, ParentAction> {
     return { parentState, parentAction in
         guard let subAction = actionPrism(parentAction) else { return }
