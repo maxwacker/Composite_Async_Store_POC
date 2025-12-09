@@ -41,7 +41,7 @@ struct ReduxApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(container: container)
+            POCView(container: container)
         }
     }
 }
