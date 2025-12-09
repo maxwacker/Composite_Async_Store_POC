@@ -8,7 +8,62 @@ import ReduxCoreIFC
 import ReduxCoreIMP
 import SwiftUI
 
+import CounterRedux
 import UserProfileRedux
+
+// MARK: - App State and Actions
+
+// Composed App State
+struct AppState: StoreState {
+    var counter: CounterState = CounterState()
+    var user: UserProfileState = UserProfileState()
+    var ui: UIState = UIState()
+}
+
+// Parent Action that encapsulates all sub-actions
+enum AppAction: Action {
+    case counter(CounterAction)
+    case user(UserProfileAction)
+    case ui(UIAction)
+}
+
+// MARK: - App Reducer
+
+// Composed Reducer using lift
+let appReducer: Reducer<AppState, AppAction> = combine(
+    lift(
+        reducer: counterReducer,
+        state: \.counter,
+        action: { action in
+            if case .counter(let counterAction) = action {
+                return counterAction
+            }
+            return nil
+        }
+    ),
+    lift(
+        reducer: userReducer,
+        state: \.user,
+        action: { action in
+            if case .user(let userAction) = action {
+                return userAction
+            }
+            return nil
+        }
+    ),
+    lift(
+        reducer: uiReducer,
+        state: \.ui,
+        action: { action in
+            if case .ui(let uiAction) = action {
+                return uiAction
+            }
+            return nil
+        }
+    )
+)
+
+// MARK: - App Middlewares
 
 let appMiddlewares: [Middleware<AppState, AppAction>] = [    
     liftMiddleware(
@@ -24,6 +79,7 @@ let appMiddlewares: [Middleware<AppState, AppAction>] = [
     )
 ]
 
+// MARK: - App
 
 @main
 struct ReduxApp: App {
