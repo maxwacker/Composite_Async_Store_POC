@@ -47,21 +47,27 @@ public actor Store<S: StoreState, A: Action> {
     }
     
     func dispatch(_ action: A) async {
-        // Run middlewares
-        var currentAction: A? = action
+        // Start by running the initial action through middlewares
+        var actionsToProcess = [action]
+        
+        // Each middleware transforms the actions sequentially
         for middleware in middlewares {
-            guard let action = currentAction else { break }
-            currentAction = await middleware(state, action)
+            var nextActions: [A] = []
+            for act in actionsToProcess {
+                let results = await middleware(state, act)
+                nextActions.append(contentsOf: results)
+            }
+            actionsToProcess = nextActions
         }
         
-        // Apply reducer if middleware didn't cancel the action
-        if let finalAction = currentAction {
+        // Apply all final actions to reducer
+        for finalAction in actionsToProcess {
             reducer(&state, finalAction)
-            
-            // Broadcast to all subscribers
-            for continuation in stateContinuations.values {
-                continuation.yield(state)
-            }
+        }
+        
+        // Broadcast state once
+        for continuation in stateContinuations.values {
+            continuation.yield(state)
         }
     }
     

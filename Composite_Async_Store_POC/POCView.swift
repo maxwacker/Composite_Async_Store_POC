@@ -14,40 +14,8 @@ import ReduxCoreIMP
 import CounterRedux
 import CounterView
 
-// MARK: - Example Implementation with Composable States
-
-// Sub-State: Counter
-
-
-
-// Sub-State: User Profile
-struct UserState: StoreState {
-    var name: String = ""
-    var email: String = ""
-    var isLoggedIn: Bool = false
-}
-
-enum UserAction: Action {
-    case setName(String)
-    case setEmail(String)
-    case login
-    case logout
-}
-
-let userReducer: Reducer<UserState, UserAction> = { state, action in
-    switch action {
-    case .setName(let name):
-        state.name = name
-    case .setEmail(let email):
-        state.email = email
-    case .login:
-        state.isLoggedIn = true
-    case .logout:
-        state.isLoggedIn = false
-        state.name = ""
-        state.email = ""
-    }
-}
+import UserProfileRedux
+import UserProfileView
 
 // Sub-State: UI Settings
 struct UIState: StoreState {
@@ -83,14 +51,14 @@ let uiReducer: Reducer<UIState, UIAction> = { state, action in
 // Composed App State
 struct AppState: StoreState {
     var counter: CounterState = CounterState()
-    var user: UserState = UserState()
+    var user: UserProfileState = UserProfileState()
     var ui: UIState = UIState()
 }
 
 // Parent Action that encapsulates all sub-actions
 enum AppAction: Action {
     case counter(CounterAction)
-    case user(UserAction)
+    case user(UserProfileAction)
     case ui(UIAction)
 }
 
@@ -127,14 +95,6 @@ let appReducer: Reducer<AppState, AppAction> = combine(
         }
     )
 )
-
-// Middleware example - Logging
-func loggingMiddleware<S: StoreState, A: Action>() -> Middleware<S, A> {
-    return { state, action in
-        print("🔵 Action: \(action)")
-        return action
-    }
-}
 
 // MARK: - Adapter Classes
 
@@ -250,56 +210,13 @@ class ViewContainer<S: StoreState, A: Action> {
     }
 }
 
-// MARK: - Example SwiftUI Views (Independent of Redux)
-
-
-
-struct UserProfileView: View {
-    let interactor: any Interacting<AppAction>
-    let namePresenter: Presenter<AppState, String>
-    let isLoggedInPresenter: Presenter<AppState, Bool>
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            if isLoggedInPresenter.value {
-                Text("Welcome, \(namePresenter.value)!")
-                    .font(.title2)
-                
-                Button("Logout") {
-                    Task {
-                        await interactor.send(.user(.logout))
-                    }
-                }
-                .buttonStyle(.bordered)
-            } else {
-                TextField("Name", text: .constant(""))
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: namePresenter.value) { _, newValue in
-                        Task {
-                            await interactor.send(.user(.setName(newValue)))
-                        }
-                    }
-                
-                Button("Login") {
-                    Task {
-                        await interactor.send(.user(.login))
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding()
-    }
-}
-
-// MARK: - Usage Example
 
 struct ContentView: View {
     let container: ViewContainer<AppState, AppAction>
     
     @State private var counterPresenter: Presenter<CounterState, Int>?
-    @State private var namePresenter: Presenter<AppState, String>?
-    @State private var isLoggedInPresenter: Presenter<AppState, Bool>?
+    @State private var namePresenter: Presenter<UserProfileState, String>?
+    @State private var isLoggedInPresenter: Presenter<UserProfileState, Bool>?
     
     var body: some View {
         Group {
@@ -318,7 +235,10 @@ struct ContentView: View {
                     }
                     
                     UserProfileView(
-                        interactor: container.interactor,
+                        interactor: container.adaptedInteractor { userProfileAction in
+                            AppAction.user(userProfileAction)
+                        }
+                        ,
                         namePresenter: namePresenter,
                         isLoggedInPresenter: isLoggedInPresenter
                     )
@@ -337,9 +257,15 @@ struct ContentView: View {
                 childKeyPath: \.count
             )
             
-            // Create presenters for user state (these stay as parent state presenters)
-            namePresenter = await container.presenter(for: \.user.name)
-            isLoggedInPresenter = await container.presenter(for: \.user.isLoggedIn)
+            // Create child state presenters for userProfile
+            //namePresenter = await container.presenter(for: \.user.name)
+            namePresenter = await container.childPresenter(
+                extractChildState: \.user,
+                childKeyPath: \.name)
+            //isLoggedInPresenter = await container.presenter(for: \.user.isLoggedIn)
+            isLoggedInPresenter = await container.childPresenter(
+                extractChildState: \.user,
+                childKeyPath: \.isLoggedIn)
         }
     }
 }
@@ -359,10 +285,11 @@ struct POCView: View {
         }
         .task {
             // Create the store with middleware
+            // FIXME : Why do we need to repeat it there, since it's already done in ReduxApp
             let store = Store(
                 initialState: AppState(),
                 reducer: appReducer,
-                middlewares: [loggingMiddleware()]
+                middlewares: appMiddlewares
             )
             
             // Create the container

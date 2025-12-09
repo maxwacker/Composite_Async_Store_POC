@@ -8,6 +8,23 @@ import ReduxCoreIFC
 import ReduxCoreIMP
 import SwiftUI
 
+import UserProfileRedux
+
+let appMiddlewares: [Middleware<AppState, AppAction>] = [    
+    liftMiddleware(
+        loginMiddleware(),
+        state: \.user,
+        extractAction: { action in
+            if case .user(let userAction) = action {
+                return userAction
+            }
+            return nil
+        },
+        embedAction: { AppAction.user($0) }
+    )
+]
+
+
 @main
 struct ReduxApp: App {
     @State private var container: ViewContainer<AppState, AppAction>
@@ -16,7 +33,7 @@ struct ReduxApp: App {
         let store = Store(
             initialState: AppState(),
             reducer: appReducer,
-            middlewares: [loggingMiddleware()]
+            middlewares: appMiddlewares
         )
         
         self._container = State(initialValue: ViewContainer(store: store))

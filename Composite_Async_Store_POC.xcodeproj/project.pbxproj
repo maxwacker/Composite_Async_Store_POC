@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		50A869B82EE856B800F7F539 /* UserProfileRedux in Frameworks */ = {isa = PBXBuildFile; productRef = 50A869B72EE856B800F7F539 /* UserProfileRedux */; };
+		50A869BA2EE856B800F7F539 /* UserProfileView in Frameworks */ = {isa = PBXBuildFile; productRef = 50A869B92EE856B800F7F539 /* UserProfileView */; };
 		50B5C6BC2EE03C9C004F316F /* ReduxCoreIFC in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6BB2EE03C9C004F316F /* ReduxCoreIFC */; };
 		50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */; };
 		50B5C6D92EE1D390004F316F /* CounterRedux in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6D82EE1D390004F316F /* CounterRedux */; };
@@ -60,8 +62,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				50B5C6BC2EE03C9C004F316F /* ReduxCoreIFC in Frameworks */,
+				50A869B82EE856B800F7F539 /* UserProfileRedux in Frameworks */,
 				50B5C6D92EE1D390004F316F /* CounterRedux in Frameworks */,
 				50B5C6DB2EE1D390004F316F /* CounterView in Frameworks */,
+				50A869BA2EE856B800F7F539 /* UserProfileView in Frameworks */,
 				50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -135,6 +139,8 @@
 				50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */,
 				50B5C6D82EE1D390004F316F /* CounterRedux */,
 				50B5C6DA2EE1D390004F316F /* CounterView */,
+				50A869B72EE856B800F7F539 /* UserProfileRedux */,
+				50A869B92EE856B800F7F539 /* UserProfileView */,
 			);
 			productName = Composite_Async_Store_POC;
 			productReference = 503EFDB42EDF272800D650F0 /* Composite_Async_Store_POC.app */;
@@ -221,6 +227,7 @@
 			packageReferences = (
 				50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */,
 				50B5C6D72EE1D366004F316F /* XCLocalSwiftPackageReference "LocalSPMS/CounterFeature" */,
+				50A869B62EE8566300F7F539 /* XCLocalSwiftPackageReference "LocalSPMS/UserProfileFeature" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 503EFDB52EDF272800D650F0 /* Products */;
@@ -644,6 +651,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		50A869B62EE8566300F7F539 /* XCLocalSwiftPackageReference "LocalSPMS/UserProfileFeature" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LocalSPMS/UserProfileFeature;
+		};
 		50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = LocalSPMS/ReduxCore;
@@ -655,6 +666,16 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		50A869B72EE856B800F7F539 /* UserProfileRedux */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50A869B62EE8566300F7F539 /* XCLocalSwiftPackageReference "LocalSPMS/UserProfileFeature" */;
+			productName = UserProfileRedux;
+		};
+		50A869B92EE856B800F7F539 /* UserProfileView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50A869B62EE8566300F7F539 /* XCLocalSwiftPackageReference "LocalSPMS/UserProfileFeature" */;
+			productName = UserProfileView;
+		};
 		50B5C6BB2EE03C9C004F316F /* ReduxCoreIFC */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */;
