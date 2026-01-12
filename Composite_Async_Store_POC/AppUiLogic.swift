@@ -11,10 +11,11 @@ import ReduxCoreIMP
 
 // MARK: - UI State and Actions
 
-// Sub-State: UI Settings
+// Sub-State: Global UI Settings
+// Note: This should only contain truly application-wide UI concerns.
+// Feature-specific concerns like loading states and error messages
+// should live in their respective feature states (CounterState, UserProfileState, etc.)
 struct UIState: StoreState {
-    var isLoading: Bool = false
-    var errorMessage: String?
     var theme: Theme = .light
     
     enum Theme: String, Equatable {
@@ -23,20 +24,11 @@ struct UIState: StoreState {
 }
 
 enum UIAction: Action {
-    case startLoading
-    case stopLoading
-    case setError(String?)
     case toggleTheme
 }
 
 let uiReducer: Reducer<UIState, UIAction> = { state, action in
     switch action {
-    case .startLoading:
-        state.isLoading = true
-    case .stopLoading:
-        state.isLoading = false
-    case .setError(let message):
-        state.errorMessage = message
     case .toggleTheme:
         state.theme = state.theme == .light ? .dark : .light
     }
