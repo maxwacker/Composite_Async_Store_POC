@@ -55,3 +55,145 @@ public struct UserProfileView: View {
     }
 }
 
+#if DEBUG
+import SwiftUI
+// MARK: - Mock Store for Previews
+
+/// A simplified store implementation for SwiftUI previews that combines
+/// both presenter and interactor functionality in a single object.
+@MainActor
+final class MockStore<S: StoreState, A: Action>: Interacting {
+    private var state: S
+    private let reducer: Reducer<S, A>
+    private var continuations: [AsyncStream<S>.Continuation] = []
+    
+    /// Optional middleware for simulating async behavior (e.g., login)
+    private nonisolated(unsafe) let middleware: (@Sendable (S, A) async -> A?)?
+    
+    init(
+        initialState: S,
+        reducer: @escaping Reducer<S, A>,
+        middleware: (@Sendable (S, A) async -> A?)? = nil
+    ) {
+        self.state = initialState
+        self.reducer = reducer
+        self.middleware = middleware
+    }
+    
+    // MARK: - Interacting Conformance
+    
+    nonisolated func send(_ action: A) async {
+        let currentState = await MainActor.run {
+            print("Preview action: \(action)")
+            
+            // Apply reducer with the action
+            reducer(&state, action)
+            
+            // Notify all subscribers of the state change
+            for continuation in continuations {
+                continuation.yield(state)
+            }
+            
+            return state
+        }
+        
+        // Run middleware if provided (for side effects like login)
+        if let middleware = middleware {
+            if let followUpAction = await middleware(currentState, action) {
+                // Send the follow-up action (e.g., loginSuccess)
+                await send(followUpAction)
+            }
+        }
+    }
+    
+    // MARK: - Presenter Creation
+    
+    /// Creates a Presenter for a specific keypath of the state
+    func presenter<Value: Equatable>(
+        for keyPath: KeyPath<S, Value>
+    ) -> Presenter<S, Value> {
+        let stream = AsyncStream<S> { [weak self] continuation in
+            guard let self else {
+                continuation.finish()
+                return
+            }
+            self.continuations.append(continuation)
+            continuation.yield(self.state)
+        }
+        
+        return Presenter(
+            initialValue: state[keyPath: keyPath],
+            stateStream: stream,
+            keyPath: keyPath
+        )
+    }
+}
+
+// MARK: - Preview
+
+#Preview("Logged Out") {
+    LoggedOutPreview()
+        .frame(width: 500, height: 400)
+        .background(Color(.windowBackgroundColor))
+}
+
+#Preview("Logged In") {
+    LoggedInPreview()
+        .frame(width: 500, height: 400)
+        .background(Color(.windowBackgroundColor))
+}
+
+private struct LoggedOutPreview: View {
+    @State private var mockStore = MockStore(
+        initialState: UserProfileState(name: "", isLoggedIn: false),
+        reducer: userReducer,
+        middleware: { state, action in
+            // Simulate login middleware behavior
+            guard case .login = action else { return nil }
+            
+            // Simulate network delay
+            try? await Task.sleep(for: .seconds(1))
+            
+            // Simulate successful login with current name
+            let name = state.name.isEmpty ? "Guest" : state.name
+            return .loginSuccess(name: name, email: "\(name.lowercased())@example.com")
+        }
+    )
+    
+    var body: some View {
+        UserProfileView(
+            interactor: mockStore,
+            namePresenter: mockStore.presenter(for: \.name),
+            isLoggedInPresenter: mockStore.presenter(for: \.isLoggedIn)
+        )
+    }
+}
+
+private struct LoggedInPreview: View {
+    @State private var mockStore = MockStore(
+        initialState: UserProfileState(name: "Jane Doe", email: "jane@example.com", isLoggedIn: true),
+        reducer: userReducer,
+        middleware: { state, action in
+            // Simulate login middleware behavior for re-login
+            guard case .login = action else { return nil }
+            
+            // Simulate network delay
+            try? await Task.sleep(for: .seconds(1))
+            
+            // Simulate successful login
+            let name = state.name.isEmpty ? "Guest" : state.name
+            return .loginSuccess(name: name, email: "\(name.lowercased().replacingOccurrences(of: " ", with: "."))@example.com")
+        }
+    )
+    
+    var body: some View {
+        UserProfileView(
+            interactor: mockStore,
+            namePresenter: mockStore.presenter(for: \.name),
+            isLoggedInPresenter: mockStore.presenter(for: \.isLoggedIn)
+        )
+    }
+}
+#endif
+
+
