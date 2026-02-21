@@ -1,6 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
+Issues: 4 CRITICAL (#1, #2, #3, #8), 4 MODERATE (#4, #5, #6, #7).
 
 ---
 
@@ -107,3 +108,39 @@ private nonisolated(unsafe) let middleware: (@Sendable (S, A) async -> A?)?
 `nonisolated(unsafe)` disables isolation checking. The property is a `let` set once in `init` and the closure is `@Sendable`, so it is safe in practice. But the annotation should be documented.
 
 **Fix:** Add a comment explaining why `nonisolated(unsafe)` is justified (immutable `let`, `@Sendable` closure).
+
+---
+
+## 8. CRITICAL — Store.dispatch: actor reentrancy allows stale state in middleware pipeline
+
+**File:** `Store.swift` — lines 49–72 (dispatch method)
+
+```swift
+func dispatch(_ action: A) async {
+    var actionsToProcess = [action]
+
+    for middleware in middlewares {
+        var nextActions: [A] = []
+        for act in actionsToProcess {
+            let results = await middleware(state, act)  // ← suspension point
+            nextActions.append(contentsOf: results)
+        }
+        actionsToProcess = nextActions
+    }
+
+    for finalAction in actionsToProcess {
+        reducer(&state, finalAction)
+    }
+    // broadcast...
+}
+```
+
+Each `await middleware(state, act)` is a suspension point. While a middleware is suspended (e.g., `loginMiddleware` sleeps for 1 second), the actor can process other `dispatch` calls. Those concurrent dispatches run their reducers and mutate `state`. When the original dispatch resumes, the middleware's decision was based on a state snapshot that no longer reflects reality.
+
+**Scenario:** User taps Login → `loginMiddleware` awaits `fetchUserProfile()` → user taps Logout during the wait → logout dispatch runs fully (sets `isLoggedIn = false`) → `loginMiddleware` resumes and returns `.loginSuccess` → reducer applies it → user is logged back in despite having tapped Logout.
+
+**Fix:** This is an architectural decision. Options include:
+- Snapshot state at dispatch entry and pass the snapshot (not live `state`) to middlewares — middlewares see a consistent view but may act on outdated data.
+- Queue dispatches so only one runs at a time (serialize through the action stream, not direct dispatch calls) — eliminates reentrancy but adds latency.
+- Let middlewares check current state before returning actions — pushes responsibility to each middleware.
+- Accept the behavior and document it as a known limitation of the POC.

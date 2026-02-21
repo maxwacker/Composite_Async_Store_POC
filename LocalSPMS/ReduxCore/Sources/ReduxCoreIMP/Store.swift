@@ -46,10 +46,14 @@ public actor Store<S: StoreState, A: Action> {
         stateContinuations.removeValue(forKey: id)
     }
     
+    // TODO: #8 CRITICAL — Actor reentrancy: each `await middleware(state, act)` is a suspension
+    // point where other dispatch calls can interleave, mutating state. Middlewares may return
+    // actions based on stale state. E.g., loginMiddleware returns .loginSuccess after a concurrent
+    // logout has already reset state.
     func dispatch(_ action: A) async {
         // Start by running the initial action through middlewares
         var actionsToProcess = [action]
-        
+
         // Each middleware transforms the actions sequentially
         for middleware in middlewares {
             var nextActions: [A] = []
