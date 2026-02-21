@@ -71,6 +71,8 @@ public actor Store<S: StoreState, A: Action> {
         }
     }
     
+    // TODO: #4 MODERATE — Task not stored or returned. Caller cannot cancel it directly.
+    // Fix: return the Task so the caller manages its lifecycle.
     public func startProcessing(_ actionStream: AsyncStream<A>) {
         Task {
             for await action in actionStream {

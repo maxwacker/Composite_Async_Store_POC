@@ -63,8 +63,10 @@ import SwiftUI
 final class MockStore<S: StoreState, A: Action>: Interacting {
     private var state: S
     private let reducer: Reducer<S, A>
+    // TODO: #6 MODERATE — Continuations array grows without cleanup on stream termination.
+    // Fix: use continuation.onTermination to remove finished entries.
     private var continuations: [AsyncStream<S>.Continuation] = []
-    
+
     init(initialState: S, reducer: @escaping Reducer<S, A>) {
         self.state = initialState
         self.reducer = reducer

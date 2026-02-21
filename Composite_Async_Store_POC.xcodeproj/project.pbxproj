@@ -38,6 +38,7 @@
 		503EFDCB2EDF272900D650F0 /* Composite_Async_Store_POCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Composite_Async_Store_POCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		507E9CED2F49A96800EF2A89 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 		507E9CEF2F49A96900EF2A89 /* DECISIONS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DECISIONS.md; sourceTree = "<group>"; };
+		50B549CE2F4A012D009E69BB /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -99,6 +100,7 @@
 				503EFDB52EDF272800D650F0 /* Products */,
 				507E9CED2F49A96800EF2A89 /* CLAUDE.md */,
 				507E9CEF2F49A96900EF2A89 /* DECISIONS.md */,
+				50B549CE2F4A012D009E69BB /* TODO.md */,
 			);
 			sourceTree = "<group>";
 		};

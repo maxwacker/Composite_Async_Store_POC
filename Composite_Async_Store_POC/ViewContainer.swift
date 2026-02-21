@@ -101,6 +101,8 @@ final class ViewContainer<S: StoreState, A: Action> {
         let stateStream = await store.subscribe()
         
         // Create a transformed stream that extracts child state
+        // TODO: #2 CRITICAL — Orphaned Task: never stored or cancelled. Runs until parent stream ends.
+        // Fix: capture Task and cancel it via continuation.onTermination.
         let childStateStream = AsyncStream<ChildState> { continuation in
             Task {
                 for await parentState in stateStream {

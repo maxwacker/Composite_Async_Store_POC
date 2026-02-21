@@ -20,6 +20,8 @@ public class Presenter<S: StoreState, Value> {
     ) where Value: Equatable {
         self.value = initialValue
         
+        // TODO: #1 CRITICAL — Retain cycle: Task captures self strongly, stream never terminates,
+        // so Presenter is never deallocated. Fix: [weak self] + stored Task + deinit cancel.
         Task {
             for await state in stateStream {
                 let newValue = state[keyPath: keyPath]
@@ -29,7 +31,7 @@ public class Presenter<S: StoreState, Value> {
             }
         }
     }
-    
+
     // Convenience initializer for computed/transformed values
     public init<SourceValue>(
         initialValue: Value,
@@ -38,7 +40,8 @@ public class Presenter<S: StoreState, Value> {
         transform: @escaping (SourceValue) -> Value
     ) where Value: Equatable {
         self.value = initialValue
-        
+
+        // TODO: #1 CRITICAL — Same retain cycle as primary initializer above.
         Task {
             for await state in stateStream {
                 let newValue = transform(state[keyPath: keyPath])

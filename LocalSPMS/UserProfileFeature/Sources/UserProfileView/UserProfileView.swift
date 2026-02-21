@@ -35,6 +35,8 @@ public struct UserProfileView: View {
                 }
                 .buttonStyle(.bordered)
             } else {
+                // TODO: #3 CRITICAL — .constant("") is read-only; user cannot type. Login input is broken.
+                // Fix: use @State var for the binding and send .setName on change.
                 TextField("Name", text: .constant(""))
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: namePresenter.value) { _, newValue in
@@ -65,9 +67,13 @@ import SwiftUI
 final class MockStore<S: StoreState, A: Action>: Interacting {
     private var state: S
     private let reducer: Reducer<S, A>
+    // TODO: #6 MODERATE — Continuations array grows without cleanup on stream termination.
+    // Fix: use continuation.onTermination to remove finished entries.
     private var continuations: [AsyncStream<S>.Continuation] = []
-    
+
     /// Optional middleware for simulating async behavior (e.g., login)
+    // TODO: #7 MODERATE — nonisolated(unsafe) disables isolation checking. Safe here (immutable let,
+    // @Sendable closure) but should be documented.
     private nonisolated(unsafe) let middleware: (@Sendable (S, A) async -> A?)?
     
     init(
