@@ -105,3 +105,20 @@ For any significant architectural choice (new pattern, structural change, depend
 - Respect the IFC/IMP separation in ReduxCore (protocols in IFC, implementations in IMP).
 - Feature views must depend only on `Interacting` and `Presenter`, not on `Store` or `ViewContainer`.
 - Keep `MockStore` patterns inside `#if DEBUG` blocks in each feature's view file.
+
+## Git Workflow — Non-Negotiable Steps
+
+### After every meaningful commit
+1. Run `git notes add -m "Session summary: <one-line description>" HEAD`
+2. Run `git push origin refs/notes/commits` to push the note to remote
+
+### About the prepare-commit-msg hook
+A `prepare-commit-msg` hook is installed in `.git/hooks/`. It injects the
+structured commit template when the message is empty. If you are composing
+a commit message programmatically, make sure it includes all four sections:
+`## What`, `## Why`, `## Alternatives considered`, `## AI-Session`.
+Do not bypass the hook format.
+
+### Verifying notes were pushed
+After pushing notes, you can verify with:
+`git log --show-notes HEAD`
