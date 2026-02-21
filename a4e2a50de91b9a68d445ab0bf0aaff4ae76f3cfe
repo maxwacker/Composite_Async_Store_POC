@@ -1,0 +1,1 @@
+Session summary: Added TODO #8 documenting actor reentrancy race condition in Store.dispatch where middleware await suspension allows concurrent dispatches to mutate state
