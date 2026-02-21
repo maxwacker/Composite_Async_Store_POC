@@ -36,6 +36,8 @@
 		503EFDB42EDF272800D650F0 /* Composite_Async_Store_POC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Composite_Async_Store_POC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		503EFDC12EDF272900D650F0 /* Composite_Async_Store_POCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Composite_Async_Store_POCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		503EFDCB2EDF272900D650F0 /* Composite_Async_Store_POCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Composite_Async_Store_POCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		507E9CED2F49A96800EF2A89 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
+		507E9CEF2F49A96900EF2A89 /* DECISIONS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DECISIONS.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -95,6 +97,8 @@
 				503EFDCE2EDF272900D650F0 /* Composite_Async_Store_POCUITests */,
 				50B5C6BA2EE03C9C004F316F /* Frameworks */,
 				503EFDB52EDF272800D650F0 /* Products */,
+				507E9CED2F49A96800EF2A89 /* CLAUDE.md */,
+				507E9CEF2F49A96900EF2A89 /* DECISIONS.md */,
 			);
 			sourceTree = "<group>";
 		};
