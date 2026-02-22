@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4, #5, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5, #6, #7).
 
 ---
 
@@ -35,23 +35,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODER
 
 ---
 
-## 4. MODERATE — Store.startProcessing: orphaned Task
+## 4. ~~MODERATE~~ RESOLVED — Store.startProcessing: orphaned Task
 
-**File:** `Store.swift` — lines 74–80
+**File:** `Store.swift`
 
-```swift
-public func startProcessing(_ actionStream: AsyncStream<A>) {
-    Task {
-        for await action in actionStream {
-            await dispatch(action)
-        }
-    }
-}
-```
+**Was:** The Task was not stored or returned. A direct caller would leak it. The existing caller (`ViewContainer`) worked by accident — the `actionStream` terminates when its continuation is released, which stops the inner Task.
 
-The Task is not stored or returned. The caller (`ViewContainer.init`) stores its own wrapping Task (`stateStreamTask`) and cancels it in `deinit`, so in practice the outer Task gets cancelled. But `startProcessing` itself doesn't enforce this — a direct caller would leak the Task.
-
-**Fix:** Return the Task or store it as a property so the caller can manage its lifecycle explicitly.
+**Fix applied:** `startProcessing` now returns `@discardableResult Task<Void, Never>`, allowing callers to store and cancel it explicitly. Existing callers that don't need the handle are unaffected thanks to `@discardableResult`.
 
 ---
 
