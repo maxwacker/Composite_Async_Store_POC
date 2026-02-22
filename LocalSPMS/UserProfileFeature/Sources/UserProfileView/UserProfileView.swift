@@ -15,19 +15,21 @@ public struct UserProfileView: View {
     let interactor: any Interacting<UserProfileAction>
     let namePresenter: Presenter<UserProfileState, String>
     let isLoggedInPresenter: Presenter<UserProfileState, Bool>
-    
+
+    @State private var nameText: String = ""
+
     public init(interactor: any Interacting<UserProfileAction>, namePresenter: Presenter<UserProfileState, String>, isLoggedInPresenter: Presenter<UserProfileState, Bool>) {
         self.interactor = interactor
         self.namePresenter = namePresenter
         self.isLoggedInPresenter = isLoggedInPresenter
     }
-    
+
     public var body: some View {
         VStack(spacing: 16) {
             if isLoggedInPresenter.value {
                 Text("Welcome, \(namePresenter.value)!")
                     .font(.title2)
-                
+
                 Button("Logout") {
                     Task {
                         await interactor.send(.logout)
@@ -35,18 +37,17 @@ public struct UserProfileView: View {
                 }
                 .buttonStyle(.bordered)
             } else {
-                // TODO: #3 CRITICAL — .constant("") is read-only; user cannot type. Login input is broken.
-                // Fix: use @State var for the binding and send .setName on change.
-                TextField("Name", text: .constant(""))
+                TextField("Name", text: $nameText)
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: namePresenter.value) { _, newValue in
-                        Task {
-                            await interactor.send(.setName(newValue))
+                        if nameText != newValue {
+                            nameText = newValue
                         }
                     }
-                
+
                 Button("Login") {
                     Task {
+                        await interactor.send(.setName(nameText))
                         await interactor.send(.login)
                     }
                 }

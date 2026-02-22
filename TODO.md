@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3, #8), 4 MODERATE (#4, #5, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4, #5, #6, #7).
 
 ---
 
@@ -25,17 +25,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3, #8), 4 MODERATE (#4, #5,
 
 ---
 
-## 3. CRITICAL — UserProfileView: TextField bound to `.constant("")`
+## 3. ~~CRITICAL~~ RESOLVED — UserProfileView: TextField bound to `.constant("")`
 
-**File:** `UserProfileView.swift` — line 38
+**File:** `UserProfileView.swift`
 
-```swift
-TextField("Name", text: .constant(""))
-```
+**Was:** `.constant("")` discards typed text — the user can type visually, but the binding always reads as `""`, so the name is silently lost. On Login, the store's name field was always empty. The `onChange(of: namePresenter.value)` observed the presenter (not the TextField), so it only fired on store-driven changes, never from user input.
 
-`.constant("")` is a read-only binding. The user cannot type anything — the text field always shows empty. The `onChange(of: namePresenter.value)` on line 40 observes the *presenter* value, not the text field, so it fires only when the Store pushes a name change (never from user input). The login flow is broken: the user can press "Login" but cannot enter a name.
-
-**Fix:** Introduce a `@State private var nameText: String` for the text field binding, and send `.setName(nameText)` on change or on login.
+**Fix applied:** Added `@State private var nameText` for the TextField binding. `.setName(nameText)` is sent on Login tap (not per-keystroke). `onChange(of: namePresenter.value)` syncs store-driven changes (e.g. logout clearing the name) back to the local state.
 
 ---
 
