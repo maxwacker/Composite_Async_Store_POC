@@ -1,19 +1,17 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1, #2, #3, #8), 4 MODERATE (#4, #5, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2, #3, #8), 4 MODERATE (#4, #5, #6, #7).
 
 ---
 
-## 1. CRITICAL — Presenter: retain cycle from unmanaged Task
+## 1. ~~CRITICAL~~ RESOLVED — Presenter: retain cycle from unmanaged Task
 
-**File:** `ReduxCoreIMP/Presenter.swift` — lines 23–30 and 42–49
+**File:** `ReduxCoreIMP/Presenter.swift`
 
-The `Task` created in each initializer captures `self` strongly. Since the `for await` loop runs indefinitely (the Store's `AsyncStream` never finishes on its own), the Task keeps `self` alive, `deinit` never fires, and the Store's `stateContinuations` dictionary grows without cleanup.
+**Was:** The `Task` created in each initializer captured `self` strongly. Since the `for await` loop runs indefinitely, the Task kept `self` alive, `deinit` never fired, and the Store's `stateContinuations` dictionary grew without cleanup.
 
-**Retention chain:** Presenter → Task (strong `self`) → Presenter alive → stream never terminates → Store continuation never removed.
-
-**Fix:** `[weak self]` + `guard let self else { return }` inside the loop to break the cycle. Store the Task in a `private var task: Task<Void, Never>?` and cancel it in `deinit` for deterministic cleanup. Use `nonisolated(unsafe)` on the property since `deinit` is non-isolated but `Presenter` is `@MainActor`.
+**Fix applied:** `[weak self]` + `guard let self else { return }` inside the loop. Task stored in `@ObservationIgnored nonisolated(unsafe) private var task: Task<Void, Never>?` and cancelled in `deinit`. `@ObservationIgnored` is required to prevent the `@Observable` macro from synthesizing access-tracking on the task property, which conflicted with `nonisolated(unsafe)` and caused a runtime crash.
 
 ---
 
