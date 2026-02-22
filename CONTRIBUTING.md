@@ -19,35 +19,17 @@ git checkout develop
 
 ---
 
-## 2. Fetch git notes
-
-This project uses `git notes` to store AI session summaries alongside commits.
-They are not fetched by default — run this once after cloning:
-
-```bash
-git fetch origin refs/notes/commits:refs/notes/commits
-```
-
-To view notes alongside the commit log:
-
-```bash
-git log --show-notes
-```
-
-To make future fetches include notes automatically, add this to `.git/config`:
-
-```ini
-[remote "origin"]
-    fetch = +refs/notes/*:refs/notes/*
-```
-
----
-
-## 3. Install the commit message hook
+## 2. Install the commit message hook
 
 Git hooks are not versioned, so you need to install the `prepare-commit-msg`
-hook manually. It injects the structured commit template when your message
-is empty, enforcing the project's commit format.
+hook manually after cloning.
+
+> **Important:** This hook is a safety net for **manual commits from Terminal
+> only**. It injects the structured commit template when your message is empty,
+> so you don't have to remember the format. It has **no effect** on commits
+> produced by the Claude Agent, which follows the commit format via `CLAUDE.md`
+> instructions. GitUp does **not** trigger Git hooks, so always use Terminal
+> when committing manually.
 
 ```bash
 cat > .git/hooks/prepare-commit-msg << 'EOF'
@@ -86,24 +68,9 @@ EOF
 chmod +x .git/hooks/prepare-commit-msg
 ```
 
-> **Note on GitUp:** GitUp does not trigger Git hooks. Use Terminal for all
-> commits to ensure the hook fires. GitUp remains useful for browsing history,
-> diffing, and branch management.
-
 ---
 
-## 4. Configure git notes push (optional but recommended)
-
-By default, `git push` does not push notes. Add this so they are included
-automatically:
-
-```bash
-git config --add remote.origin.push 'refs/notes/*'
-```
-
----
-
-## 5. Set up Claude Agent in Xcode
+## 3. Set up Claude Agent in Xcode
 
 1. Open `Composite_Async_Store_POC.xcodeproj` in Xcode 26.3
 2. Go to **Xcode → Settings → Intelligence**
@@ -113,7 +80,7 @@ git config --add remote.origin.push 'refs/notes/*'
 
 ---
 
-## 6. Understand the commit format
+## 4. Understand the commit format
 
 Every commit in this project — whether produced by an AI session or manually —
 follows this format:
@@ -137,16 +104,9 @@ What the AI session explored and decided, or "No AI session — manual commit."
 The `prepare-commit-msg` hook injects this template automatically when
 committing from Terminal with no `-m` flag.
 
-After each meaningful commit, add a git note and push it:
-
-```bash
-git notes add -m "Session summary: <one-line description>" HEAD
-git push origin refs/notes/commits
-```
-
 ---
 
-## 7. Read the architectural context
+## 5. Read the architectural context
 
 Before starting any significant work, read:
 

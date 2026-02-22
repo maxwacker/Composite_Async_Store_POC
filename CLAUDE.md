@@ -85,14 +85,6 @@ Every commit produced during an AI session **must** use this format:
 **Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `build`
 **Scopes:** `core`, `counter`, `userprofile`, `app`, `infra`, or the relevant module name
 
-### Post-Commit
-
-After each meaningful commit, run:
-
-```bash
-git notes add -m "Session summary: <one-line description of what the AI session accomplished>" HEAD
-```
-
 ### Decision Logging
 
 For any significant architectural choice (new pattern, structural change, dependency decision), add an entry to `DECISIONS.md` at the project root following the format already established in that file.
@@ -106,19 +98,12 @@ For any significant architectural choice (new pattern, structural change, depend
 - Feature views must depend only on `Interacting` and `Presenter`, not on `Store` or `ViewContainer`.
 - Keep `MockStore` patterns inside `#if DEBUG` blocks in each feature's view file.
 
-## Git Workflow — Non-Negotiable Steps
+## About the prepare-commit-msg hook
 
-### After every meaningful commit
-1. Run `git notes add -m "Session summary: <one-line description>" HEAD`
-2. Run `git push origin refs/notes/commits` to push the note to remote
-
-### About the prepare-commit-msg hook
 A `prepare-commit-msg` hook is installed in `.git/hooks/`. It injects the
-structured commit template when the message is empty. If you are composing
-a commit message programmatically, make sure it includes all four sections:
+structured commit template when the message is empty. This hook is a safety
+net for manual commits from Terminal only — it has no effect on commits
+produced by the Claude Agent, which follows the commit format via the
+instructions in this file. If you are composing a commit message
+programmatically, make sure it includes all four sections:
 `## What`, `## Why`, `## Alternatives considered`, `## AI-Session`.
-Do not bypass the hook format.
-
-### Verifying notes were pushed
-After pushing notes, you can verify with:
-`git log --show-notes HEAD`
