@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2, #3, #8), 4 MODERATE (#4, #5, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3, #8), 4 MODERATE (#4, #5, #6, #7).
 
 ---
 
@@ -15,23 +15,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2, #3, #8), 4 MODERATE (#4, #5, #6, #7).
 
 ---
 
-## 2. CRITICAL — ViewContainer.childPresenter: orphaned Task in AsyncStream builder
+## 2. ~~CRITICAL~~ RESOLVED — ViewContainer.childPresenter: orphaned Task in AsyncStream builder
 
-**File:** `ViewContainer.swift` — lines 104–110
+**File:** `ViewContainer.swift`
 
-```swift
-let childStateStream = AsyncStream<ChildState> { continuation in
-    Task {
-        for await parentState in stateStream {
-            continuation.yield(extractChildState(parentState))
-        }
-    }
-}
-```
+**Was:** The `Task` inside the `AsyncStream` build closure was never stored. It could not be cancelled when the child stream's consumer stopped iterating, running indefinitely until the parent stream terminated.
 
-The `Task` is created inside the `AsyncStream` build closure but never stored. It cannot be cancelled when the child stream's consumer stops iterating. The Task will run until the parent `stateStream` terminates, which may be never.
-
-**Fix:** Use `continuation.onTermination` to capture and cancel the Task, or restructure so the Task's lifetime is tied to the stream's consumer.
+**Fix applied:** Capture the `Task` in a local variable and use `continuation.onTermination` to cancel it when the consumer stops iterating. The Task's lifetime is now tied to the child stream's consumer.
 
 ---
 
