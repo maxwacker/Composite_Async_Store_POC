@@ -63,9 +63,7 @@ import SwiftUI
 final class MockStore<S: StoreState, A: Action>: Interacting {
     private var state: S
     private let reducer: Reducer<S, A>
-    // TODO: #6 MODERATE — Continuations array grows without cleanup on stream termination.
-    // Fix: use continuation.onTermination to remove finished entries.
-    private var continuations: [AsyncStream<S>.Continuation] = []
+    private var continuations: [UUID: AsyncStream<S>.Continuation] = [:]
 
     init(initialState: S, reducer: @escaping Reducer<S, A>) {
         self.state = initialState
@@ -80,7 +78,7 @@ final class MockStore<S: StoreState, A: Action>: Interacting {
             reducer(&state, action)
             
             // Notify all subscribers of the state change
-            for continuation in continuations {
+            for continuation in continuations.values {
                 continuation.yield(state)
             }
         }
@@ -92,13 +90,19 @@ final class MockStore<S: StoreState, A: Action>: Interacting {
     func presenter<Value: Equatable>(
         for keyPath: KeyPath<S, Value>
     ) -> Presenter<S, Value> {
+        let id = UUID()
         let stream = AsyncStream<S> { [weak self] continuation in
             guard let self else {
                 continuation.finish()
                 return
             }
-            self.continuations.append(continuation)
+            self.continuations[id] = continuation
             continuation.yield(self.state)
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.continuations.removeValue(forKey: id)
+                }
+            }
         }
         
         return Presenter(

@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7).
 
 ---
 
@@ -55,15 +55,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODER
 
 ---
 
-## 6. MODERATE — MockStore (both features): continuations array grows without cleanup
+## 6. ~~MODERATE~~ RESOLVED — MockStore (both features): continuations array grows without cleanup
 
-**Files:**
-- `CounterView.swift` — line 66 (`continuations` array)
-- `UserProfileView.swift` — line 68 (`continuations` array)
+**Files:** `CounterView.swift`, `UserProfileView.swift`
 
-Each call to `presenter(for:)` appends a continuation to the array. Continuations are never removed when the corresponding `Presenter` or stream is deallocated. In a preview session with repeated view reloads, this array grows indefinitely.
+**Was:** Each call to `presenter(for:)` appended a continuation to an array. Continuations were never removed when the corresponding stream terminated, causing the array to grow indefinitely during preview reloads.
 
-**Fix:** Use `continuation.onTermination` to remove the finished continuation from the array.
+**Fix applied:** Replaced the array with a `[UUID: Continuation]` dictionary. Each `presenter(for:)` call generates a UUID key. `continuation.onTermination` removes the entry when the stream's consumer stops iterating.
 
 ---
 
