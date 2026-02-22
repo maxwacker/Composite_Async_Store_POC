@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5, #6, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6, #7).
 
 ---
 
@@ -45,17 +45,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODER
 
 ---
 
-## 5. MODERATE — ActionEmitter: `@unchecked Sendable` without safety documentation
+## 5. ~~MODERATE~~ RESOLVED — ActionEmitter: `@unchecked Sendable` without safety documentation
 
-**File:** `ActionEmitter.swift` — line 3
+**File:** `ActionEmitter.swift`
 
-```swift
-public final class ActionEmitter<A: Action>: Interacting, @unchecked Sendable {
-```
+**Was:** `@unchecked Sendable` opted out of compiler thread-safety checks without explaining why it was safe.
 
-`@unchecked Sendable` opts out of the compiler's thread-safety checks. The class holds a single `AsyncStream<A>.Continuation`, which *is* thread-safe (`yield` is safe to call from any context). But the `@unchecked` annotation should be documented so future maintainers know *why* it's safe.
-
-**Fix:** Add a comment explaining that `Continuation.yield` is thread-safe, which is the sole justification for `@unchecked Sendable`.
+**Fix applied:** Replaced the TODO comment with a documentation comment explaining that the sole stored property (`AsyncStream.Continuation`) has a thread-safe `yield(_:)` method, which justifies `@unchecked Sendable`.
 
 ---
 
