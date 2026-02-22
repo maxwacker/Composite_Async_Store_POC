@@ -1,0 +1,1 @@
+Session summary: Fixed TODO #1 — Presenter retain cycle resolved with [weak self], stored Task, deinit cancel, and @ObservationIgnored to prevent @Observable macro conflict
