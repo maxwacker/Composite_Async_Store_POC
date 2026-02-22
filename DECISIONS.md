@@ -118,3 +118,37 @@ The UserProfile variant additionally supports an optional async middleware closu
 
 - **Using the real `Store` actor in previews:** Works (and is done in `POCView`'s preview) but requires composing the full app state and middlewares, which defeats the purpose of feature isolation.
 - **Static/hardcoded preview data:** Faster to set up but doesn't validate interaction logic or state transitions.
+
+---
+
+## ADR-005: Serialized Dispatch via Internal AsyncStream Queue
+
+**Date:** 2026-02-22
+**Status:** Accepted
+
+### Context
+
+`Store.dispatch` is an `async` actor method because middlewares are async (e.g., `loginMiddleware` calls `await fetchUserProfile()`). Swift actors use cooperative reentrancy: when an actor method hits an `await`, the actor can process other method calls. This means a second `dispatch` can start and mutate `state` while the first is suspended in a middleware. When the first resumes, its middleware decisions are based on stale state.
+
+**Concrete scenario:** User taps Login → `loginMiddleware` suspends for network call → user taps Logout → logout dispatch runs fully (clears `isLoggedIn`) → login middleware resumes and returns `.loginSuccess` → user is logged back in despite tapping Logout.
+
+### Decision
+
+Serialize all dispatch calls through an internal `AsyncStream<A>` queue inside the Store actor:
+
+1. `startProcessing` forwards external actions into the internal `dispatchStream` via `enqueue()`.
+2. A single `processActions()` loop (`for await action in dispatchStream`) drains the queue.
+3. `processActions()` is the sole caller of `dispatch`. Since `for await` won't pull the next element until the current iteration body completes, only one `dispatch` (including all its middleware `await`s) runs at a time.
+
+### Rationale
+
+- **Eliminates the bug class entirely:** No middleware can ever see state mutated by a concurrent dispatch. State is always consistent within a dispatch cycle.
+- **No middleware-level complexity:** Middleware authors don't need to defensively re-check state or handle races — the framework guarantees serial execution.
+- **Minimal implementation change:** The public API (`startProcessing`, `subscribe`) is unchanged. Only internal plumbing is added.
+- **Latency trade-off is acceptable:** Actions queue up if a middleware is slow (e.g., network call). In this POC, this is the correct behavior — the user's subsequent actions should see the fully resolved state from prior actions, not race against them.
+
+### Alternatives Considered
+
+- **Snapshot state at dispatch entry:** Pass a frozen copy of state to middlewares instead of live `state`. Middlewares see a consistent snapshot, but their decisions may be based on outdated data (e.g., a middleware might approve an action that a concurrent dispatch already invalidated). The reentrancy itself is not eliminated — just masked.
+- **Middleware-level guards:** Each middleware checks current state before returning actions. This pushes serialization responsibility to every middleware author, is error-prone, and doesn't compose — a new middleware could introduce a race by forgetting the check.
+- **Accept and document:** Viable for a POC, but leaves a known correctness bug that would be carried forward if the architecture is reused. Fixing it now establishes the correct pattern.

@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved). All resolved.
 
 ---
 
@@ -75,36 +75,12 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODER
 
 ---
 
-## 8. CRITICAL — Store.dispatch: actor reentrancy allows stale state in middleware pipeline
+## 8. ~~CRITICAL~~ RESOLVED — Store.dispatch: actor reentrancy allows stale state in middleware pipeline
 
-**File:** `Store.swift` — lines 49–72 (dispatch method)
+**File:** `Store.swift`
 
-```swift
-func dispatch(_ action: A) async {
-    var actionsToProcess = [action]
-
-    for middleware in middlewares {
-        var nextActions: [A] = []
-        for act in actionsToProcess {
-            let results = await middleware(state, act)  // ← suspension point
-            nextActions.append(contentsOf: results)
-        }
-        actionsToProcess = nextActions
-    }
-
-    for finalAction in actionsToProcess {
-        reducer(&state, finalAction)
-    }
-    // broadcast...
-}
-```
-
-Each `await middleware(state, act)` is a suspension point. While a middleware is suspended (e.g., `loginMiddleware` sleeps for 1 second), the actor can process other `dispatch` calls. Those concurrent dispatches run their reducers and mutate `state`. When the original dispatch resumes, the middleware's decision was based on a state snapshot that no longer reflects reality.
+**Was:** `dispatch` was called directly from `startProcessing`'s `for await` loop. Each `await middleware(state, act)` is a suspension point where actor reentrancy allowed concurrent dispatch executions — a second action could start processing while the first was suspended in a middleware, mutating state under it.
 
 **Scenario:** User taps Login → `loginMiddleware` awaits `fetchUserProfile()` → user taps Logout during the wait → logout dispatch runs fully (sets `isLoggedIn = false`) → `loginMiddleware` resumes and returns `.loginSuccess` → reducer applies it → user is logged back in despite having tapped Logout.
 
-**Fix:** This is an architectural decision. Options include:
-- Snapshot state at dispatch entry and pass the snapshot (not live `state`) to middlewares — middlewares see a consistent view but may act on outdated data.
-- Queue dispatches so only one runs at a time (serialize through the action stream, not direct dispatch calls) — eliminates reentrancy but adds latency.
-- Let middlewares check current state before returning actions — pushes responsibility to each middleware.
-- Accept the behavior and document it as a known limitation of the POC.
+**Fix applied:** Serialized dispatch via an internal `AsyncStream` queue (see ADR-005 in DECISIONS.md). `startProcessing` now forwards external actions into an internal `dispatchStream`. A single `processActions()` loop drains this stream, calling `dispatch` for each action. Since `for await` won't pull the next action until the current `dispatch` (including all middleware `await`s) fully completes, dispatches are strictly serial. No two dispatch calls are ever in-flight simultaneously.
