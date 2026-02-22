@@ -1,7 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7).
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved).
 
 ---
 
@@ -65,17 +65,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8), 4 MODER
 
 ---
 
-## 7. MODERATE — UserProfileView MockStore: `nonisolated(unsafe)` on middleware property
+## 7. ~~MODERATE~~ RESOLVED — UserProfileView MockStore: `nonisolated(unsafe)` on middleware property
 
-**File:** `UserProfileView.swift` — line 71
+**File:** `UserProfileView.swift`
 
-```swift
-private nonisolated(unsafe) let middleware: (@Sendable (S, A) async -> A?)?
-```
+**Was:** `nonisolated(unsafe)` on the middleware property disabled isolation checking without explaining why it was safe.
 
-`nonisolated(unsafe)` disables isolation checking. The property is a `let` set once in `init` and the closure is `@Sendable`, so it is safe in practice. But the annotation should be documented.
-
-**Fix:** Add a comment explaining why `nonisolated(unsafe)` is justified (immutable `let`, `@Sendable` closure).
+**Fix applied:** Replaced the TODO comment with a documentation comment explaining that the property is an immutable `let` assigned once in `init` and the closure is `@Sendable`, so no mutable isolated state is shared.
 
 ---
 

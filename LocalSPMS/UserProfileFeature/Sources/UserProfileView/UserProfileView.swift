@@ -70,9 +70,11 @@ final class MockStore<S: StoreState, A: Action>: Interacting {
     private let reducer: Reducer<S, A>
     private var continuations: [UUID: AsyncStream<S>.Continuation] = [:]
 
-    /// Optional middleware for simulating async behavior (e.g., login)
-    // TODO: #7 MODERATE — nonisolated(unsafe) disables isolation checking. Safe here (immutable let,
-    // @Sendable closure) but should be documented.
+    /// Optional middleware for simulating async behavior (e.g., login).
+    ///
+    /// `nonisolated(unsafe)` is safe here because:
+    /// - The property is an immutable `let`, assigned once in `init` and never mutated.
+    /// - The closure is `@Sendable`, so it captures no mutable isolated state.
     private nonisolated(unsafe) let middleware: (@Sendable (S, A) async -> A?)?
     
     init(
