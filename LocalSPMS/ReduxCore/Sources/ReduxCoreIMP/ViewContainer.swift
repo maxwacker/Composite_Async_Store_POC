@@ -1,65 +1,70 @@
 //
 //  ViewContainer.swift
-//  Composite_Async_Store_POC
+//  ReduxCoreIMP
 //
 //  Created by maxime wacker on 09/12/2025.
 //
 
 import Foundation
 import ReduxCoreIFC
-import ReduxCoreIMP
 
 // MARK: - Adapter Classes
 
-// TODO: #10 ENHANCEMENT — ViewContainer and AdaptedInteractor are fully generic.
-// They should be moved into ReduxCoreIMP so any ReduxCore consumer gets the Store↔View bridge.
-
-// Adapter to transform parent interactor to child interactor
-@MainActor
-final class AdaptedInteractor<ParentAction: Action, ChildAction: Action>: Interacting {
+/// Adapter to transform a parent interactor into a child interactor.
+/// Wraps a parent `Interacting` and maps child actions to parent actions via a transform closure.
+///
+/// Not `@MainActor` — all stored properties are immutable `let`s, and both
+/// `any Interacting<ParentAction>` (which requires `Sendable`) and the
+/// `@Sendable` transform closure are safe to use from any isolation context.
+public final class AdaptedInteractor<ParentAction: Action, ChildAction: Action>: Interacting, @unchecked Sendable {
     private let parentInteractor: any Interacting<ParentAction>
-    private let transform: (ChildAction) -> ParentAction
-    
-    init(
+    private let transform: @Sendable (ChildAction) -> ParentAction
+
+    public init(
         parentInteractor: any Interacting<ParentAction>,
-        transform: @escaping (ChildAction) -> ParentAction
+        transform: @escaping @Sendable (ChildAction) -> ParentAction
     ) {
         self.parentInteractor = parentInteractor
         self.transform = transform
     }
-    
-    func send(_ action: ChildAction) async {
+
+    public func send(_ action: ChildAction) async {
         await parentInteractor.send(transform(action))
     }
 }
 
 // MARK: - View Container
 
+/// Bridge between `Store` and SwiftUI views.
+///
+/// Owns an `ActionEmitter` for dispatching actions and provides factory methods
+/// for creating `Presenter` instances bound to state key paths. Generic over
+/// the app's state and action types — contains no app-specific logic.
 @MainActor
-final class ViewContainer<S: StoreState, A: Action> {
-    let store: Store<S, A>
-    let interactor: ActionEmitter<A>
-    
+public final class ViewContainer<S: StoreState, A: Action> {
+    public let store: Store<S, A>
+    public let interactor: ActionEmitter<A>
+
     private let actionContinuation: AsyncStream<A>.Continuation
     private let actionStream: AsyncStream<A>
     private var stateStreamTask: Task<Void, Never>?
-    
-    init(store: Store<S, A>) {
+
+    public init(store: Store<S, A>) {
         self.store = store
-        
+
         var continuation: AsyncStream<A>.Continuation!
         self.actionStream = AsyncStream { continuation = $0 }
         self.actionContinuation = continuation
-        
+
         self.interactor = ActionEmitter(continuation: continuation)
-        
+
         // Connect action stream to store
         self.stateStreamTask = Task {
             await store.startProcessing(actionStream)
         }
     }
-    
-    func presenter<Value: Equatable>(
+
+    public func presenter<Value: Equatable>(
         for keyPath: KeyPath<S, Value>
     ) async -> Presenter<Value> {
         let currentState = await store.state
@@ -71,7 +76,7 @@ final class ViewContainer<S: StoreState, A: Action> {
         )
     }
 
-    func presenter<Value: Equatable, SourceValue>(
+    public func presenter<Value: Equatable, SourceValue>(
         for keyPath: KeyPath<S, SourceValue>,
         transform: @escaping (SourceValue) -> Value
     ) async -> Presenter<Value> {
@@ -84,25 +89,25 @@ final class ViewContainer<S: StoreState, A: Action> {
             transform: transform
         )
     }
-    
-    // Helper to create adapted interactor for child actions
-    func adaptedInteractor<ChildAction: Action>(
-        transform: @escaping (ChildAction) -> A
+
+    /// Creates an adapted interactor that maps child actions to parent actions.
+    public func adaptedInteractor<ChildAction: Action>(
+        transform: @escaping @Sendable (ChildAction) -> A
     ) -> AdaptedInteractor<A, ChildAction> {
         return AdaptedInteractor(
             parentInteractor: interactor,
             transform: transform
         )
     }
-    
-    // Helper to create child state presenter from parent state
-    func childPresenter<ChildState: StoreState, Value: Equatable>(
+
+    /// Creates a presenter for a child state slice extracted from the parent state.
+    public func childPresenter<ChildState: StoreState, Value: Equatable>(
         extractChildState: @escaping (S) -> ChildState,
         childKeyPath: KeyPath<ChildState, Value>
     ) async -> Presenter<Value> {
         let currentState = await store.state
         let stateStream = await store.subscribe()
-        
+
         // Create a transformed stream that extracts child state
         let childStateStream = AsyncStream<ChildState> { continuation in
             let task = Task {
@@ -114,14 +119,14 @@ final class ViewContainer<S: StoreState, A: Action> {
                 task.cancel()
             }
         }
-        
+
         return Presenter(
             initialValue: extractChildState(currentState)[keyPath: childKeyPath],
             stateStream: childStateStream,
             keyPath: childKeyPath
         )
     }
-    
+
     deinit {
         stateStreamTask?.cancel()
     }

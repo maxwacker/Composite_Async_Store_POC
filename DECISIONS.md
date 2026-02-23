@@ -183,3 +183,33 @@ Remove `S` from `Presenter`'s class signature: `Presenter<S: StoreState, Value>`
 - **Type-erased `AnyPresenter<Value>` wrapper:** An `@Observable` class wrapping any presenter and forwarding observation. This works but adds indirection, requires careful observation forwarding, and solves a problem that doesn't exist — since `S` is never stored, there's nothing to erase.
 - **`Presenting<Value>` protocol in IFC:** Would document the contract but can't be used as `any Presenting<Value>` in SwiftUI views (observation doesn't propagate). Views would still depend on the concrete class. Documents intent without changing dependencies — useful but insufficient alone.
 - **Keep `Presenter<S, Value>` and accept the leak:** The state type in view declarations is a cosmetic issue, not a correctness bug. However, it sets a precedent that views know about state internals, which undermines the architecture's separation goal.
+
+---
+
+## ADR-007: Move ViewContainer and AdaptedInteractor into ReduxCoreIMP
+
+**Date:** 2026-02-23
+**Status:** Accepted
+
+### Context
+
+`ViewContainer` and `AdaptedInteractor` lived in the app target (`Composite_Async_Store_POC/ViewContainer.swift`) but were fully generic — they depended only on `ReduxCoreIFC` types (`Action`, `StoreState`, `Interacting`) and `ReduxCoreIMP` types (`Store`, `ActionEmitter`, `Presenter`). They contained zero app-specific logic. Any app using ReduxCore would need to reimplement the same Store↔View wiring.
+
+### Decision
+
+Move `ViewContainer` and `AdaptedInteractor` into `ReduxCoreIMP` so any ReduxCore consumer gets the composition bridge out of the box.
+
+### Rationale
+
+- **Eliminates boilerplate for consumers.** The Store↔View bridge is the natural and only sensible wiring for this architecture. Making each app reimplement it is unnecessary duplication.
+- **Completes the framework boundary.** With `ViewContainer` in `ReduxCoreIMP`, the entire Redux pipeline — from action emission through state broadcasting to view binding — is contained within the framework. The app target only needs to define its state/action/reducer/middleware types and compose them.
+- **No new dependencies.** `ViewContainer` only uses types already in `ReduxCoreIFC` and `ReduxCoreIMP`. No changes to `Package.swift` were needed.
+
+### Implementation Notes
+
+- `AdaptedInteractor` was changed from `@MainActor` to `@unchecked Sendable`. In the app target (with more lenient concurrency settings), `@MainActor` worked. In the SPM package with Swift 6 strict concurrency, the `@MainActor` isolation on `send` conflicted with the `Interacting` protocol's nonisolated `send` requirement. Since all stored properties are immutable `let`s and the transform closure is `@Sendable`, the class is safe to use from any isolation context — `@unchecked Sendable` is the correct annotation.
+
+### Alternatives Considered
+
+- **Keep in app target:** Works for this POC but sets a pattern where every consumer reinvents the bridge. The types are clearly framework-level infrastructure, not app-level composition.
+- **Create a separate `ReduxCoreUI` package:** Would separate "pure Redux" from "SwiftUI bridge" concerns. Premature for this POC — `ViewContainer` is small and tightly coupled to `Store`/`ActionEmitter`/`Presenter`. A third package adds build complexity without meaningful separation.

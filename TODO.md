@@ -2,7 +2,7 @@
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
 Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved), 1 ENHANCEMENT (#9 ✓resolved). All resolved.
-1 ENHANCEMENT (#10) open.
+1 ENHANCEMENT (#10 ✓resolved). All resolved.
 
 ---
 
@@ -100,21 +100,12 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolv
 
 ---
 
-## 10. ENHANCEMENT — Move ViewContainer and AdaptedInteractor into ReduxCoreIMP
+## 10. ~~ENHANCEMENT~~ RESOLVED — Move ViewContainer and AdaptedInteractor into ReduxCoreIMP
 
-**File:** `Composite_Async_Store_POC/ViewContainer.swift`
+**File:** `Composite_Async_Store_POC/ViewContainer.swift` → `ReduxCoreIMP/ViewContainer.swift`
 
-`ViewContainer` and `AdaptedInteractor` are fully generic — they depend only on `ReduxCoreIFC` types (`Action`, `StoreState`, `Interacting`) and `ReduxCoreIMP` types (`Store`, `ActionEmitter`, `Presenter`). They contain zero app-specific logic.
+**Was:** `ViewContainer` and `AdaptedInteractor` lived in the app target despite being fully generic — they depended only on `ReduxCoreIFC`/`ReduxCoreIMP` types with zero app-specific logic. Every app using ReduxCore would need to reimplement the same Store↔View bridge.
 
-Currently they live in the app target, meaning every app that uses ReduxCore must reimplement the same Store↔View wiring. They belong in `ReduxCoreIMP` alongside the other implementation types they compose.
-
-**Goal:** Move `ViewContainer` and `AdaptedInteractor` into `ReduxCoreIMP` so any ReduxCore consumer gets the composition bridge out of the box.
-
-**Changes required:**
-- Move `ViewContainer.swift` from the app target into `LocalSPMS/ReduxCore/Sources/ReduxCoreIMP/`
-- Mark `ViewContainer`, `AdaptedInteractor`, and their public-facing members as `public`
-- Update `POCView.swift` — the `import ReduxCoreIMP` already present should be sufficient
-- Remove the file from the app target's build sources
-- Verify the app and previews still build and run
+**Fix applied:** Moved `ViewContainer.swift` into `LocalSPMS/ReduxCore/Sources/ReduxCoreIMP/`. Added `public` access modifiers to both types and their API surface. Removed `import ReduxCoreIMP` (now internal to the module). Changed `AdaptedInteractor` from `@MainActor` to `@unchecked Sendable` (all stored properties are immutable `let`s; the transform closure is `@Sendable`) to satisfy Swift 6 strict concurrency in the SPM package context. See ADR-007 in DECISIONS.md.
 
 

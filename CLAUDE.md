@@ -22,7 +22,7 @@ View ←(observes)← Presenter ←(AsyncStream<S>)← Store ←(AsyncStream<A>)
 | **Interacting** | `ReduxCoreIFC/Interacting.swift` | Protocol: `send(_ action: A) async` — the only dependency views have on the dispatch layer |
 | **Reducer** | `ReduxCoreIFC/Reducer.swift` | Typealias: `@Sendable (inout S, A) -> Void` with `lift()` and `combine()` composition helpers |
 | **Middleware** | `ReduxCoreIFC/Middleware.swift` | Typealias: `(S, A) async -> [A]` with `liftMiddleware()` for composing child→parent |
-| **ViewContainer** | `App/ViewContainer.swift` | Bridge between Store and Views; owns `ActionEmitter`, creates `Presenter`s and `AdaptedInteractor`s |
+| **ViewContainer** | `ReduxCoreIMP/ViewContainer.swift` | Bridge between Store and Views; owns `ActionEmitter`, creates `Presenter`s and `AdaptedInteractor`s |
 | **MockStore** | Feature `#if DEBUG` blocks | Preview-only object implementing both `Interacting` and presenter creation for self-contained SwiftUI previews |
 
 ### Package Structure
@@ -31,7 +31,7 @@ View ←(observes)← Presenter ←(AsyncStream<S>)← Store ←(AsyncStream<A>)
 LocalSPMS/
 ├── ReduxCore/                 # Core framework
 │   ├── ReduxCoreIFC/          # Protocols & typealiases (Action, StoreState, Reducer, Middleware, Interacting)
-│   └── ReduxCoreIMP/          # Implementations (Store, ActionEmitter, Presenter)
+│   └── ReduxCoreIMP/          # Implementations (Store, ActionEmitter, Presenter, ViewContainer, AdaptedInteractor)
 ├── CounterFeature/
 │   ├── CounterRedux/          # CounterState, CounterAction, counterReducer
 │   └── CounterView/           # CounterView + MockStore preview
@@ -40,7 +40,7 @@ LocalSPMS/
     └── UserProfileView/       # UserProfileView + MockStore preview (with middleware support)
 ```
 
-Main app files: `DemoApp.swift` (composition root), `POCView.swift` (view hierarchy), `ViewContainer.swift` (Store↔View bridge), `AppUiLogic.swift` (global UI state).
+Main app files: `DemoApp.swift` (composition root), `POCView.swift` (view hierarchy), `AppUiLogic.swift` (global UI state).
 
 ### Current State of the POC
 
