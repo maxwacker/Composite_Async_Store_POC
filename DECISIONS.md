@@ -71,9 +71,9 @@ Views need to (a) send user actions to the store and (b) observe state slices fo
 
 Split the view's Store dependency into two explicit contracts:
 - **`Interacting<A>`** — a protocol with a single method `send(_ action: A) async`, implemented by `ActionEmitter` in production and `MockStore` in previews.
-- **`Presenter<S, Value>`** — an `@Observable` class that subscribes to an `AsyncStream<S>` and exposes a `value` property derived via `KeyPath` extraction.
+- **`Presenter<Value>`** — an `@Observable` class that subscribes to an `AsyncStream<S>` and exposes a `value` property derived via `KeyPath` extraction. (Originally `Presenter<S, Value>`, simplified in ADR-006.)
 
-Views declare their dependencies as `let interactor: any Interacting<FeatureAction>` and `let somePresenter: Presenter<FeatureState, ValueType>`.
+Views declare their dependencies as `let interactor: any Interacting<FeatureAction>` and `let somePresenter: Presenter<ValueType>`.
 
 ### Rationale
 
@@ -152,3 +152,34 @@ Serialize all dispatch calls through an internal `AsyncStream<A>` queue inside t
 - **Snapshot state at dispatch entry:** Pass a frozen copy of state to middlewares instead of live `state`. Middlewares see a consistent snapshot, but their decisions may be based on outdated data (e.g., a middleware might approve an action that a concurrent dispatch already invalidated). The reentrancy itself is not eliminated — just masked.
 - **Middleware-level guards:** Each middleware checks current state before returning actions. This pushes serialization responsibility to every middleware author, is error-prone, and doesn't compose — a new middleware could introduce a race by forgetting the check.
 - **Accept and document:** Viable for a POC, but leaves a known correctness bug that would be carried forward if the architecture is reused. Fixing it now establishes the correct pattern.
+
+---
+
+## ADR-006: Remove State Type Parameter from Presenter's Class Signature
+
+**Date:** 2026-02-23
+**Status:** Accepted
+
+### Context
+
+`Presenter<S: StoreState, Value>` had two generic parameters: the full state type `S` and the extracted value type `Value`. Views declared dependencies like `Presenter<CounterState, Int>`, leaking the state type into the view layer. This created an asymmetry: the action side used the abstract `any Interacting<FeatureAction>` (hiding the Store), while the observation side exposed the concrete state type.
+
+A pure protocol abstraction (`any Presenting<Value>`) was not viable because SwiftUI's `@Observable` macro does not propagate observation tracking through protocol existentials as of Swift 6.2.
+
+### Decision
+
+Remove `S` from `Presenter`'s class signature: `Presenter<S: StoreState, Value>` → `Presenter<Value>`. Push `S` into the initializer's generic constraints: `public init<S: StoreState>(initialValue:stateStream:keyPath:)`.
+
+### Rationale
+
+- **`S` is never stored.** `Presenter`'s stored properties are `value: Value` and `task: Task<Void, Never>?`. The state type `S` only appears in initializer arguments (`AsyncStream<S>`, `KeyPath<S, Value>`) and is consumed inside the `Task` closure. Once the initializer returns, `S` exists only as a captured type in the running Task — it has no presence in the class's interface.
+- **Views become state-agnostic.** `Presenter<Int>` instead of `Presenter<CounterState, Int>`. Views no longer import the state module (e.g., `CounterRedux`) just to satisfy the type parameter.
+- **No wrappers needed.** An `AnyPresenter<Value>` type-erased wrapper was considered but adds indirection and complexity for observation forwarding. Since `S` was never stored, removing it from the signature is strictly simpler.
+- **No protocol needed.** The concrete `Presenter<Value>` class is already as clean as a protocol would be — one generic parameter, one observable property. A `Presenting<Value>` protocol would document intent but provide no additional decoupling given the `@Observable` constraint.
+- **Zero runtime change.** The refactoring is purely at the type-system level. No behavior, memory layout, or performance characteristics change.
+
+### Alternatives Considered
+
+- **Type-erased `AnyPresenter<Value>` wrapper:** An `@Observable` class wrapping any presenter and forwarding observation. This works but adds indirection, requires careful observation forwarding, and solves a problem that doesn't exist — since `S` is never stored, there's nothing to erase.
+- **`Presenting<Value>` protocol in IFC:** Would document the contract but can't be used as `any Presenting<Value>` in SwiftUI views (observation doesn't propagate). Views would still depend on the concrete class. Documents intent without changing dependencies — useful but insufficient alone.
+- **Keep `Presenter<S, Value>` and accept the leak:** The state type in view declarations is a cosmetic issue, not a correctness bug. However, it sets a precedent that views know about state internals, which undermines the architecture's separation goal.

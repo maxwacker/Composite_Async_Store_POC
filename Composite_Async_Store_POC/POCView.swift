@@ -8,13 +8,10 @@
 import SwiftUI
 import Observation
 
-import ReduxCoreIFC
 import ReduxCoreIMP
 
-import CounterRedux
 import CounterView
 
-import UserProfileRedux
 import UserProfileView
 
 // MARK: - Content View
@@ -22,9 +19,9 @@ import UserProfileView
 struct ContentView: View {
     let container: ViewContainer<AppState, AppAction>
     
-    @State private var counterPresenter: Presenter<CounterState, Int>?
-    @State private var namePresenter: Presenter<UserProfileState, String>?
-    @State private var isLoggedInPresenter: Presenter<UserProfileState, Bool>?
+    @State private var counterPresenter: Presenter<Int>?
+    @State private var namePresenter: Presenter<String>?
+    @State private var isLoggedInPresenter: Presenter<Bool>?
     
     var body: some View {
         Group {

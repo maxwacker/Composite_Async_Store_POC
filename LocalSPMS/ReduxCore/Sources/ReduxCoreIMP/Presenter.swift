@@ -10,7 +10,7 @@ import ReduxCoreIFC
 import Observation
 @MainActor
 @Observable
-public class Presenter<S: StoreState, Value> {
+public class Presenter<Value> {
     public var value: Value
 
     // nonisolated(unsafe) because deinit is non-isolated but Presenter is @MainActor.
@@ -20,7 +20,7 @@ public class Presenter<S: StoreState, Value> {
     @ObservationIgnored
     nonisolated(unsafe) private var task: Task<Void, Never>?
 
-    public init(
+    public init<S: StoreState>(
         initialValue: Value,
         stateStream: AsyncStream<S>,
         keyPath: KeyPath<S, Value>
@@ -39,7 +39,7 @@ public class Presenter<S: StoreState, Value> {
     }
 
     // Convenience initializer for computed/transformed values
-    public init<SourceValue>(
+    public init<S: StoreState, SourceValue>(
         initialValue: Value,
         stateStream: AsyncStream<S>,
         keyPath: KeyPath<S, SourceValue>,

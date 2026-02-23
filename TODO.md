@@ -1,8 +1,7 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved). All resolved.
-1 ENHANCEMENT (#9) open.
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved), 1 ENHANCEMENT (#9 ✓resolved). All resolved.
 
 ---
 
@@ -88,18 +87,13 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolv
 
 ---
 
-## 9. ENHANCEMENT — Abstract the Presenter dependency in feature views
+## 9. ~~ENHANCEMENT~~ RESOLVED — Abstract the Presenter dependency in feature views
 
-**Files:** `CounterView.swift`, `UserProfileView.swift`, `ReduxCoreIFC/`, `ReduxCoreIMP/Presenter.swift`
+**Files:** `Presenter.swift`, `ViewContainer.swift`, `POCView.swift`, `CounterView.swift`, `UserProfileView.swift`
 
-Views depend on the `Interacting` protocol (abstract) for dispatching actions, but on the concrete `Presenter<S, Value>` class for state observation. This asymmetry leaks the state type `S` into views even though they only access `.value: Value`.
+**Was:** Views depended on `Presenter<S, Value>` — a concrete class with two generic parameters. The state type `S` leaked into views even though they only accessed `.value: Value`. This created an asymmetry: the action side used `any Interacting<Action>` (abstract, one param) while the observation side exposed the full state type.
 
-**Goal:** Views should depend on an abstract `Presenting` contract, mirroring the `Interacting` pattern.
+**Constraint:** SwiftUI's `@Observable` macro does not propagate through protocol existentials (`any SomeProtocol`) as of Swift 6.2, ruling out a pure protocol abstraction.
 
-**Constraint:** SwiftUI's `@Observable` macro generates observation tracking on the concrete class. As of Swift 6.2, `any SomeProtocol` existentials do not propagate `@Observable` changes to SwiftUI views. A pure protocol abstraction alone is not sufficient — the concrete `@Observable` class must remain in the type chain for observation to work.
-
-**Options to explore:**
-- **Type-erased `AnyPresenter<Value>`:** An `@Observable` wrapper that hides the `S` parameter. Views depend on `AnyPresenter<Value>` — still concrete, still observable, but no leaked state type.
-- **Protocol + concrete requirement:** Define a `Presenting<Value>` protocol in IFC documenting the contract, but views continue to use the concrete type. Documents intent without changing the dependency.
-- **Future Swift evolution:** Observation through protocols may become possible in a future Swift version, at which point a pure protocol approach would work.
+**Fix applied:** Removed `S` from `Presenter`'s type signature: `Presenter<S: StoreState, Value>` → `Presenter<Value>`. The `S` parameter was only consumed in initializer arguments (`AsyncStream<S>`, `KeyPath<S, Value>`) and never stored. Pushing `S` to init-level generic constraints (`public init<S: StoreState>(...)`) eliminates the type leak with no wrappers, no indirection, and no observation forwarding issues. See ADR-006 in DECISIONS.md.
 

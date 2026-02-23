@@ -13,14 +13,12 @@ import UserProfileRedux
 
 public struct UserProfileView: View {
     let interactor: any Interacting<UserProfileAction>
-    // TODO: #9 ENHANCEMENT — concrete Presenter leaks UserProfileState into the view.
-    // Should depend on an abstract Presenting<Value> instead.
-    let namePresenter: Presenter<UserProfileState, String>
-    let isLoggedInPresenter: Presenter<UserProfileState, Bool>
+    let namePresenter: Presenter<String>
+    let isLoggedInPresenter: Presenter<Bool>
 
     @State private var nameText: String = ""
 
-    public init(interactor: any Interacting<UserProfileAction>, namePresenter: Presenter<UserProfileState, String>, isLoggedInPresenter: Presenter<UserProfileState, Bool>) {
+    public init(interactor: any Interacting<UserProfileAction>, namePresenter: Presenter<String>, isLoggedInPresenter: Presenter<Bool>) {
         self.interactor = interactor
         self.namePresenter = namePresenter
         self.isLoggedInPresenter = isLoggedInPresenter
@@ -120,7 +118,7 @@ final class MockStore<S: StoreState, A: Action>: Interacting {
     /// Creates a Presenter for a specific keypath of the state
     func presenter<Value: Equatable>(
         for keyPath: KeyPath<S, Value>
-    ) -> Presenter<S, Value> {
+    ) -> Presenter<Value> {
         let id = UUID()
         let stream = AsyncStream<S> { [weak self] continuation in
             guard let self else {

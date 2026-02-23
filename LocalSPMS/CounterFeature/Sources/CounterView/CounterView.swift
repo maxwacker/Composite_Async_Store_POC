@@ -13,11 +13,9 @@ import CounterRedux
 
 public struct CounterView: View {
     let interactor: any Interacting<CounterAction>
-    // TODO: #9 ENHANCEMENT — concrete Presenter leaks CounterState into the view.
-    // Should depend on an abstract Presenting<Int> instead.
-    let counterPresenter: Presenter<CounterState, Int>
-    
-    public init(interactor: any Interacting<CounterAction>, counterPresenter: Presenter<CounterState, Int>) {
+    let counterPresenter: Presenter<Int>
+
+    public init(interactor: any Interacting<CounterAction>, counterPresenter: Presenter<Int>) {
         self.interactor = interactor
         self.counterPresenter = counterPresenter
     }
@@ -91,7 +89,7 @@ final class MockStore<S: StoreState, A: Action>: Interacting {
     /// Creates a Presenter for a specific keypath of the state
     func presenter<Value: Equatable>(
         for keyPath: KeyPath<S, Value>
-    ) -> Presenter<S, Value> {
+    ) -> Presenter<Value> {
         let id = UUID()
         let stream = AsyncStream<S> { [weak self] continuation in
             guard let self else {

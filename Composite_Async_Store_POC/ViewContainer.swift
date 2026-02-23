@@ -58,7 +58,7 @@ final class ViewContainer<S: StoreState, A: Action> {
     
     func presenter<Value: Equatable>(
         for keyPath: KeyPath<S, Value>
-    ) async -> Presenter<S, Value> {
+    ) async -> Presenter<Value> {
         let currentState = await store.state
         let stateStream = await store.subscribe()
         return Presenter(
@@ -67,11 +67,11 @@ final class ViewContainer<S: StoreState, A: Action> {
             keyPath: keyPath
         )
     }
-    
+
     func presenter<Value: Equatable, SourceValue>(
         for keyPath: KeyPath<S, SourceValue>,
         transform: @escaping (SourceValue) -> Value
-    ) async -> Presenter<S, Value> {
+    ) async -> Presenter<Value> {
         let currentState = await store.state
         let stateStream = await store.subscribe()
         return Presenter(
@@ -96,7 +96,7 @@ final class ViewContainer<S: StoreState, A: Action> {
     func childPresenter<ChildState: StoreState, Value: Equatable>(
         extractChildState: @escaping (S) -> ChildState,
         childKeyPath: KeyPath<ChildState, Value>
-    ) async -> Presenter<ChildState, Value> {
+    ) async -> Presenter<Value> {
         let currentState = await store.state
         let stateStream = await store.subscribe()
         
