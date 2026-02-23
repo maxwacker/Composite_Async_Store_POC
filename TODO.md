@@ -2,6 +2,7 @@
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
 Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved), 1 ENHANCEMENT (#9 ✓resolved). All resolved.
+1 ENHANCEMENT (#10) open.
 
 ---
 
@@ -96,4 +97,24 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolv
 **Constraint:** SwiftUI's `@Observable` macro does not propagate through protocol existentials (`any SomeProtocol`) as of Swift 6.2, ruling out a pure protocol abstraction.
 
 **Fix applied:** Removed `S` from `Presenter`'s type signature: `Presenter<S: StoreState, Value>` → `Presenter<Value>`. The `S` parameter was only consumed in initializer arguments (`AsyncStream<S>`, `KeyPath<S, Value>`) and never stored. Pushing `S` to init-level generic constraints (`public init<S: StoreState>(...)`) eliminates the type leak with no wrappers, no indirection, and no observation forwarding issues. See ADR-006 in DECISIONS.md.
+
+---
+
+## 10. ENHANCEMENT — Move ViewContainer and AdaptedInteractor into ReduxCoreIMP
+
+**File:** `Composite_Async_Store_POC/ViewContainer.swift`
+
+`ViewContainer` and `AdaptedInteractor` are fully generic — they depend only on `ReduxCoreIFC` types (`Action`, `StoreState`, `Interacting`) and `ReduxCoreIMP` types (`Store`, `ActionEmitter`, `Presenter`). They contain zero app-specific logic.
+
+Currently they live in the app target, meaning every app that uses ReduxCore must reimplement the same Store↔View wiring. They belong in `ReduxCoreIMP` alongside the other implementation types they compose.
+
+**Goal:** Move `ViewContainer` and `AdaptedInteractor` into `ReduxCoreIMP` so any ReduxCore consumer gets the composition bridge out of the box.
+
+**Changes required:**
+- Move `ViewContainer.swift` from the app target into `LocalSPMS/ReduxCore/Sources/ReduxCoreIMP/`
+- Mark `ViewContainer`, `AdaptedInteractor`, and their public-facing members as `public`
+- Update `POCView.swift` — the `import ReduxCoreIMP` already present should be sufficient
+- Remove the file from the app target's build sources
+- Verify the app and previews still build and run
+
 

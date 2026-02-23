@@ -11,6 +11,9 @@ import ReduxCoreIMP
 
 // MARK: - Adapter Classes
 
+// TODO: #10 ENHANCEMENT — ViewContainer and AdaptedInteractor are fully generic.
+// They should be moved into ReduxCoreIMP so any ReduxCore consumer gets the Store↔View bridge.
+
 // Adapter to transform parent interactor to child interactor
 @MainActor
 final class AdaptedInteractor<ParentAction: Action, ChildAction: Action>: Interacting {
