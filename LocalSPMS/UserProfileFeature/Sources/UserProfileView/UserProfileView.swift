@@ -13,6 +13,8 @@ import UserProfileRedux
 
 public struct UserProfileView: View {
     let interactor: any Interacting<UserProfileAction>
+    // TODO: #9 ENHANCEMENT — concrete Presenter leaks UserProfileState into the view.
+    // Should depend on an abstract Presenting<Value> instead.
     let namePresenter: Presenter<UserProfileState, String>
     let isLoggedInPresenter: Presenter<UserProfileState, Bool>
 

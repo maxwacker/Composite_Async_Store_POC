@@ -13,6 +13,8 @@ import CounterRedux
 
 public struct CounterView: View {
     let interactor: any Interacting<CounterAction>
+    // TODO: #9 ENHANCEMENT — concrete Presenter leaks CounterState into the view.
+    // Should depend on an abstract Presenting<Int> instead.
     let counterPresenter: Presenter<CounterState, Int>
     
     public init(interactor: any Interacting<CounterAction>, counterPresenter: Presenter<CounterState, Int>) {
