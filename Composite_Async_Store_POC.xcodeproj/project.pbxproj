@@ -13,6 +13,8 @@
 		50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6BD2EE03C9C004F316F /* ReduxCoreIMP */; };
 		50B5C6D92EE1D390004F316F /* CounterRedux in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6D82EE1D390004F316F /* CounterRedux */; };
 		50B5C6DB2EE1D390004F316F /* CounterView in Frameworks */ = {isa = PBXBuildFile; productRef = 50B5C6DA2EE1D390004F316F /* CounterView */; };
+		50CC01F92F4E293200467C8E /* DesignSystemDefaultIMP in Frameworks */ = {isa = PBXBuildFile; productRef = 50CC01F82F4E293200467C8E /* DesignSystemDefaultIMP */; };
+		50CC01FB2F4E293200467C8E /* DesignSystemIFC in Frameworks */ = {isa = PBXBuildFile; productRef = 50CC01FA2F4E293200467C8E /* DesignSystemIFC */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,12 +66,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				50CC01FB2F4E293200467C8E /* DesignSystemIFC in Frameworks */,
 				50B5C6BC2EE03C9C004F316F /* ReduxCoreIFC in Frameworks */,
 				50A869B82EE856B800F7F539 /* UserProfileRedux in Frameworks */,
 				50B5C6D92EE1D390004F316F /* CounterRedux in Frameworks */,
 				50B5C6DB2EE1D390004F316F /* CounterView in Frameworks */,
 				50A869BA2EE856B800F7F539 /* UserProfileView in Frameworks */,
 				50B5C6BE2EE03C9C004F316F /* ReduxCoreIMP in Frameworks */,
+				50CC01F92F4E293200467C8E /* DesignSystemDefaultIMP in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +151,8 @@
 				50B5C6DA2EE1D390004F316F /* CounterView */,
 				50A869B72EE856B800F7F539 /* UserProfileRedux */,
 				50A869B92EE856B800F7F539 /* UserProfileView */,
+				50CC01F82F4E293200467C8E /* DesignSystemDefaultIMP */,
+				50CC01FA2F4E293200467C8E /* DesignSystemIFC */,
 			);
 			productName = Composite_Async_Store_POC;
 			productReference = 503EFDB42EDF272800D650F0 /* Composite_Async_Store_POC.app */;
@@ -234,6 +240,7 @@
 				50B5C6B92EE03C23004F316F /* XCLocalSwiftPackageReference "LocalSPMS/ReduxCore" */,
 				50B5C6D72EE1D366004F316F /* XCLocalSwiftPackageReference "LocalSPMS/CounterFeature" */,
 				50A869B62EE8566300F7F539 /* XCLocalSwiftPackageReference "LocalSPMS/UserProfileFeature" */,
+				50CC01F72F4E292400467C8E /* XCLocalSwiftPackageReference "LocalSPMS/DesignSystem" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 503EFDB52EDF272800D650F0 /* Products */;
@@ -669,6 +676,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = LocalSPMS/CounterFeature;
 		};
+		50CC01F72F4E292400467C8E /* XCLocalSwiftPackageReference "LocalSPMS/DesignSystem" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LocalSPMS/DesignSystem;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -701,6 +712,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 50B5C6D72EE1D366004F316F /* XCLocalSwiftPackageReference "LocalSPMS/CounterFeature" */;
 			productName = CounterView;
+		};
+		50CC01F82F4E293200467C8E /* DesignSystemDefaultIMP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50CC01F72F4E292400467C8E /* XCLocalSwiftPackageReference "LocalSPMS/DesignSystem" */;
+			productName = DesignSystemDefaultIMP;
+		};
+		50CC01FA2F4E293200467C8E /* DesignSystemIFC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 50CC01F72F4E292400467C8E /* XCLocalSwiftPackageReference "LocalSPMS/DesignSystem" */;
+			productName = DesignSystemIFC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

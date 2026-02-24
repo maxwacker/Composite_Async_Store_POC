@@ -9,6 +9,7 @@ import SwiftUI
 import Observation
 
 import ReduxCoreIMP
+import DesignSystemDefaultIMP
 
 import CounterView
 
@@ -79,9 +80,10 @@ struct ContentView: View {
 
 struct POCView: View {
     let container: ViewContainer<AppState, AppAction>
-    
+
     var body: some View {
         ContentView(container: container)
+            .brandTheme()
     }
 }
 

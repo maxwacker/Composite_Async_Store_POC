@@ -10,6 +10,7 @@ import ReduxCoreIFC
 import ReduxCoreIMP
 
 import UserProfileRedux
+import DesignSystemIFC
 
 public struct UserProfileView: View {
     let interactor: any Interacting<UserProfileAction>
@@ -28,7 +29,7 @@ public struct UserProfileView: View {
         VStack(spacing: 16) {
             if isLoggedInPresenter.value {
                 Text("Welcome, \(namePresenter.value)!")
-                    .font(.title2)
+                    .dsHeadline()
 
                 Button("Logout") {
                     Task {
@@ -51,7 +52,7 @@ public struct UserProfileView: View {
                         await interactor.send(.login)
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .dsPrimaryButton()
             }
         }
         .padding()
@@ -60,6 +61,8 @@ public struct UserProfileView: View {
 
 #if DEBUG
 import SwiftUI
+import DesignSystemDefaultIMP
+
 // MARK: - Mock Store for Previews
 
 /// A simplified store implementation for SwiftUI previews that combines
@@ -179,6 +182,7 @@ private struct LoggedOutPreview: View {
             namePresenter: mockStore.presenter(for: \.name),
             isLoggedInPresenter: mockStore.presenter(for: \.isLoggedIn)
         )
+        .brandTheme()
     }
 }
 
@@ -205,6 +209,7 @@ private struct LoggedInPreview: View {
             namePresenter: mockStore.presenter(for: \.name),
             isLoggedInPresenter: mockStore.presenter(for: \.isLoggedIn)
         )
+        .brandTheme()
     }
 }
 #endif

@@ -10,6 +10,7 @@ import ReduxCoreIFC
 import ReduxCoreIMP
 
 import CounterRedux
+import DesignSystemIFC
 
 public struct CounterView: View {
     let interactor: any Interacting<CounterAction>
@@ -23,7 +24,7 @@ public struct CounterView: View {
     public var body: some View {
         VStack(spacing: 20) {
             Text("Counter: \(counterPresenter.value)")
-                .font(.largeTitle)
+                .dsHeadline()
             
             HStack(spacing: 16) {
                 Button("−") {
@@ -31,29 +32,31 @@ public struct CounterView: View {
                         await interactor.send(.decrement)
                     }
                 }
-                .buttonStyle(.bordered)
+                .dsPrimaryButton()
                 
                 Button("+") {
                     Task {
                         await interactor.send(.increment)
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .dsPrimaryButton()
                 
                 Button("Reset") {
                     Task {
                         await interactor.send(.reset)
                     }
                 }
-                .buttonStyle(.bordered)
+                .dsPrimaryButton()
             }
         }
         .padding()
+        .dsCard()
     }
 }
 
 #if DEBUG
 import SwiftUI
+import DesignSystemDefaultIMP
 
 // MARK: - Mock Store for Previews
 
@@ -126,12 +129,13 @@ private struct PreviewContent: View {
         initialState: CounterState(count: 42),
         reducer: counterReducer
     )
-    
+
     var body: some View {
         CounterView(
             interactor: mockStore,
             counterPresenter: mockStore.presenter(for: \.count)
         )
+        .brandTheme()
     }
 }
 #endif

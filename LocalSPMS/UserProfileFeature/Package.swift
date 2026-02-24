@@ -18,8 +18,8 @@ let package = Package(
         ),
     ],
     dependencies: [
-            .package(path:"../ReduxCore")
-            
+            .package(path:"../ReduxCore"),
+            .package(path:"../DesignSystem")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -35,7 +35,9 @@ let package = Package(
             dependencies: [
                 "UserProfileRedux",
                 .product(name: "ReduxCoreIFC", package: "ReduxCore"),
-                .product(name: "ReduxCoreIMP", package: "ReduxCore")
+                .product(name: "ReduxCoreIMP", package: "ReduxCore"),
+                .product(name: "DesignSystemIFC", package: "DesignSystem"),
+                .product(name: "DesignSystemDefaultIMP", package: "DesignSystem")
             ],
         ),
 

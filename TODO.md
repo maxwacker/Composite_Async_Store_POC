@@ -1,8 +1,8 @@
 # TODO — Issues Identified by Code Review
 
 Priority: CRITICAL first, then MODERATE. Fix order follows dependency chain.
-Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved), 1 ENHANCEMENT (#9 ✓resolved). All resolved.
-1 ENHANCEMENT (#10 ✓resolved). All resolved.
+Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolved), 4 MODERATE (#4 ✓resolved, #5 ✓resolved, #6 ✓resolved, #7 ✓resolved), 2 ENHANCEMENT (#9 ✓resolved, #10 ✓resolved). All resolved.
+1 FEATURE (#11 ✓resolved). All resolved.
 
 ---
 
@@ -107,5 +107,19 @@ Issues: 4 CRITICAL (#1 ✓resolved, #2 ✓resolved, #3 ✓resolved, #8 ✓resolv
 **Was:** `ViewContainer` and `AdaptedInteractor` lived in the app target despite being fully generic — they depended only on `ReduxCoreIFC`/`ReduxCoreIMP` types with zero app-specific logic. Every app using ReduxCore would need to reimplement the same Store↔View bridge.
 
 **Fix applied:** Moved `ViewContainer.swift` into `LocalSPMS/ReduxCore/Sources/ReduxCoreIMP/`. Added `public` access modifiers to both types and their API surface. Removed `import ReduxCoreIMP` (now internal to the module). Changed `AdaptedInteractor` from `@MainActor` to `@unchecked Sendable` (all stored properties are immutable `let`s; the transform closure is `@Sendable`) to satisfy Swift 6 strict concurrency in the SPM package context. See ADR-007 in DECISIONS.md.
+
+---
+
+## 11. ~~FEATURE~~ RESOLVED — Introduce DesignSystem SPM package
+
+**Files:** New `LocalSPMS/DesignSystem/` package; modified `DemoApp.swift`, `POCView.swift`, `CounterView.swift`, `UserProfileView.swift`, feature `Package.swift` files; deleted `AppUiLogic.swift`
+
+**Was:** Theme state (UIState/UIAction/uiReducer) lived in the app target as Redux state, which was over-engineered for static design tokens. No reusable design system — fonts, colors, spacing, and corner radii were hardcoded per-view.
+
+**Fix applied:** Created a `DesignSystem` SPM package following the IFC/IMP pattern:
+- **DesignSystemIFC**: `DesignTokensProtocol` (semantic token contract), `FallbackTokens` (neutral defaults for standalone previews), `DesignTokensEnvironment` (custom `EnvironmentKey` + `.theme()` modifier), view modifiers (`HeadlineModifier`, `BodyTextModifier`, `PrimaryButtonModifier`, `CardModifier`), view extensions (`.dsHeadline()`, `.dsBody()`, `.dsPrimaryButton()`, `.dsCard()`)
+- **DesignSystemDefaultIMP**: `BrandTokens` (light), `DarkBrandTokens` (dark), `BrandThemeModifier` + `.brandTheme()` (auto-resolves color scheme)
+
+Deleted `AppUiLogic.swift` (UIState/UIAction/uiReducer). App root applies `.brandTheme()` — color scheme resolution is fully encapsulated in the design system. Feature views depend on `DesignSystemIFC` for production code; `DesignSystemDefaultIMP` is imported under `#if DEBUG` for preview theming. See ADR-008 in DECISIONS.md.
 
 

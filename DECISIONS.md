@@ -213,3 +213,38 @@ Move `ViewContainer` and `AdaptedInteractor` into `ReduxCoreIMP` so any ReduxCor
 
 - **Keep in app target:** Works for this POC but sets a pattern where every consumer reinvents the bridge. The types are clearly framework-level infrastructure, not app-level composition.
 - **Create a separate `ReduxCoreUI` package:** Would separate "pure Redux" from "SwiftUI bridge" concerns. Premature for this POC — `ViewContainer` is small and tightly coupled to `Store`/`ActionEmitter`/`Presenter`. A third package adds build complexity without meaningful separation.
+
+---
+
+## ADR-008: DesignSystem SPM Package with IFC/IMP Split and Environment-Based Token Injection
+
+**Date:** 2026-02-24
+**Status:** Accepted
+
+### Context
+
+The app used Redux state (`UIState`, `UIAction`, `uiReducer`) for theme management. This was over-engineered — design tokens (colors, fonts, spacings, corner radii) are static configuration, not dynamic state that needs Redux's action→reducer→state cycle. Feature views hardcoded styling (`.font(.largeTitle)`, `.buttonStyle(.borderedProminent)`) with no shared design language.
+
+### Decision
+
+Create a `DesignSystem` SPM package following the same IFC/IMP pattern as `ReduxCore`:
+
+- **`DesignSystemIFC`** (contract layer): `DesignTokensProtocol` defining all semantic tokens; `FallbackTokens` providing neutral system defaults; custom `EnvironmentKey` with `any DesignTokensProtocol` existential; `ViewModifier` structs (`HeadlineModifier`, `BodyTextModifier`, `PrimaryButtonModifier`, `CardModifier`) reading `@Environment(\.designTokens)`; `View` extensions (`.dsHeadline()`, `.dsBody()`, `.dsPrimaryButton()`, `.dsCard()`, `.theme()`).
+- **`DesignSystemDefaultIMP`** (concrete layer): `BrandTokens` (light theme), `DarkBrandTokens` (dark theme), `BrandThemeModifier` + `.brandTheme()` (auto-resolves `colorScheme` and injects the appropriate token set).
+
+Delete `AppUiLogic.swift`. The app root applies `.brandTheme()`. Feature production code imports only `DesignSystemIFC`; `DesignSystemDefaultIMP` is imported under `#if DEBUG` for preview theming via `.brandTheme()`.
+
+### Rationale
+
+- **Tokens are configuration, not state.** SwiftUI's `Environment` is the natural injection mechanism for static styling data. Redux dispatch→reduce→broadcast adds latency and complexity for values that never change at runtime (within a given color scheme).
+- **IFC/IMP separation enables brand swapping.** A white-label app would provide its own `IMP` module with different `BrandTokens` while reusing the same `IFC` contract and feature views unchanged.
+- **`FallbackTokens` enables standalone previews.** Features can render meaningful previews using only `DesignSystemIFC` — they fall back to system defaults without importing any concrete implementation. However, for brand-accurate previews, features import `DesignSystemDefaultIMP` under `#if DEBUG` and apply `.brandTheme()`.
+- **`BrandThemeModifier` encapsulates color scheme resolution.** Consumers call `.brandTheme()` — they never need to know about `@Environment(\.colorScheme)`, `BrandTokens`, or `DarkBrandTokens`. This keeps the light/dark switching logic in one place.
+- **`any DesignTokensProtocol` existential in Environment.** The performance cost of existential dispatch is negligible — tokens are read once per view evaluation, not in tight loops. This avoids making the `EnvironmentKey` generic, which would complicate the `View.theme()` API.
+
+### Alternatives Considered
+
+- **Keep Redux-based theme state:** Works but is overweight for static tokens. Every token read requires a `Presenter` subscription to an `AsyncStream`, adding overhead and complexity for values that don't change per user action.
+- **Single `DesignSystem` target (no IFC/IMP split):** Simpler package structure, but features would depend on the concrete token implementations. This prevents brand swapping and creates unnecessary coupling.
+- **Generic `EnvironmentKey` parameterized on token type:** Avoids existential dispatch but forces `.theme(BrandTokens())` to specify the concrete type, complicating the API when the app root needs to switch between light and dark tokens of different types.
+- **Rely on SwiftUI's automatic dark mode adaptation:** Works for system colors (`.primary`, `.secondary`) but not for brand-specific colors. The design system needs explicit light/dark token sets to maintain brand identity across color schemes.

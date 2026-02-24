@@ -17,14 +17,12 @@ import UserProfileRedux
 struct AppState: StoreState {
     var counter: CounterState = CounterState()
     var user: UserProfileState = UserProfileState()
-    var ui: UIState = UIState()
 }
 
 // Parent Action that encapsulates all sub-actions
 enum AppAction: Action {
     case counter(CounterAction)
     case user(UserProfileAction)
-    case ui(UIAction)
 }
 
 // MARK: - App Reducer
@@ -47,16 +45,6 @@ let appReducer: Reducer<AppState, AppAction> = combine(
         action: { action in
             if case .user(let userAction) = action {
                 return userAction
-            }
-            return nil
-        }
-    ),
-    lift(
-        reducer: uiReducer,
-        state: \.ui,
-        action: { action in
-            if case .ui(let uiAction) = action {
-                return uiAction
             }
             return nil
         }
@@ -84,17 +72,17 @@ let appMiddlewares: [Middleware<AppState, AppAction>] = [
 @main
 struct ReduxApp: App {
     @State private var container: ViewContainer<AppState, AppAction>
-    
+
     init() {
         let store = Store(
             initialState: AppState(),
             reducer: appReducer,
             middlewares: appMiddlewares
         )
-        
+
         self._container = State(initialValue: ViewContainer(store: store))
     }
-    
+
     var body: some Scene {
         WindowGroup {
             POCView(container: container)

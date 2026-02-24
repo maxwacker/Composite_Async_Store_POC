@@ -24,6 +24,9 @@ View ←(observes)← Presenter ←(AsyncStream<S>)← Store ←(AsyncStream<A>)
 | **Middleware** | `ReduxCoreIFC/Middleware.swift` | Typealias: `(S, A) async -> [A]` with `liftMiddleware()` for composing child→parent |
 | **ViewContainer** | `ReduxCoreIMP/ViewContainer.swift` | Bridge between Store and Views; owns `ActionEmitter`, creates `Presenter`s and `AdaptedInteractor`s |
 | **MockStore** | Feature `#if DEBUG` blocks | Preview-only object implementing both `Interacting` and presenter creation for self-contained SwiftUI previews |
+| **DesignTokensProtocol** | `DesignSystemIFC/DesignTokensProtocol.swift` | Semantic design token contract: colors, fonts, spacings, corner radii |
+| **FallbackTokens** | `DesignSystemIFC/FallbackTokens.swift` | Neutral system defaults enabling standalone feature previews without concrete brand tokens |
+| **BrandThemeModifier** | `DesignSystemDefaultIMP/BrandThemeModifier.swift` | ViewModifier that reads `colorScheme` and injects `BrandTokens` or `DarkBrandTokens`; exposed via `.brandTheme()` |
 
 ### Package Structure
 
@@ -32,6 +35,9 @@ LocalSPMS/
 ├── ReduxCore/                 # Core framework
 │   ├── ReduxCoreIFC/          # Protocols & typealiases (Action, StoreState, Reducer, Middleware, Interacting)
 │   └── ReduxCoreIMP/          # Implementations (Store, ActionEmitter, Presenter, ViewContainer, AdaptedInteractor)
+├── DesignSystem/              # Design token system
+│   ├── DesignSystemIFC/       # DesignTokensProtocol, FallbackTokens, EnvironmentKey, ViewModifiers, View extensions
+│   └── DesignSystemDefaultIMP/ # BrandTokens (light), DarkBrandTokens (dark), BrandThemeModifier (.brandTheme())
 ├── CounterFeature/
 │   ├── CounterRedux/          # CounterState, CounterAction, counterReducer
 │   └── CounterView/           # CounterView + MockStore preview
@@ -40,14 +46,15 @@ LocalSPMS/
     └── UserProfileView/       # UserProfileView + MockStore preview (with middleware support)
 ```
 
-Main app files: `DemoApp.swift` (composition root), `POCView.swift` (view hierarchy), `AppUiLogic.swift` (global UI state).
+Main app files: `DemoApp.swift` (composition root), `POCView.swift` (view hierarchy with `.brandTheme()` injection).
 
 ### Current State of the POC
 
 - Two features (Counter, UserProfile) fully working with composable state/actions/reducers/middlewares
 - `lift()` and `combine()` proven for reducer composition; `liftMiddleware()` proven for middleware composition
-- Feature views depend only on `Interacting` protocol and `Presenter` — no knowledge of Store internals
-- SwiftUI Previews use a `MockStore` pattern (defined per-feature under `#if DEBUG`) that unifies `Interacting` and presenter creation
+- Feature views depend only on `Interacting` protocol, `Presenter`, and `DesignSystemIFC` — no knowledge of Store internals or concrete brand tokens
+- DesignSystem SPM package with IFC/IMP split; environment-based token injection via `.brandTheme()` with automatic light/dark mode switching
+- SwiftUI Previews use a `MockStore` pattern (defined per-feature under `#if DEBUG`) that unifies `Interacting` and presenter creation, with `.brandTheme()` for brand-accurate preview theming
 - UserProfile MockStore supports optional middleware for simulating async login in previews
 - Swift Tools Version 6.2, targeting iOS 18 / macOS 15+
 
